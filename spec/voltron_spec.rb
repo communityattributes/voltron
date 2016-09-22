@@ -33,7 +33,7 @@ describe Voltron do
   end
 
   it "should log to the defined logger" do
-    expect(Voltron.config.logger).to receive(:info).with("[Voltron] [Tag] Test 1")
+    expect(Voltron.config.logger).to receive(:info).with(/Test 1/)
     Voltron.log("Test 1", "Tag")
   end
 
