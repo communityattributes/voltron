@@ -11,4 +11,9 @@ describe Voltron::Asset do
   it "should return nil if file does not exist" do
     expect(assets.find("missing.png")).to be_nil
   end
+
+  it "should return a file path if the file exists" do
+  	expect(assets.find("1.jpg")).to_not be_blank
+  	expect(assets.find("1.jpg")).to match(/\/1\.jpg$/)
+  end
 end
