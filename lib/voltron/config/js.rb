@@ -1,22 +1,27 @@
 module Voltron
-	class Config
-		class Js
+  class Config
 
-			attr_accessor :custom
+    def js
+      @js ||= Js.new
+    end
 
-			def initialize
-				@custom = Hash.new
-			end
+    class Js
 
-			def to_h
-				@custom
-			end
+      attr_accessor :custom
 
-			private
+      def initialize
+        @custom = Hash.new
+      end
 
-				def method_missing(method, value, &block)
-					@custom[method.to_s.chomp("=")] = value
-				end
-		end
-	end
+      def to_h
+        @custom
+      end
+
+      private
+
+        def method_missing(method, value, &block)
+          @custom[method.to_s.chomp("=")] = value
+        end
+    end
+  end
 end
