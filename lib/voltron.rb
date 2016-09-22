@@ -38,4 +38,4 @@ module Voltron
 	end
 end
 
-require "voltron/railtie" if defined?(Rails)
+require "voltron/engine" if defined?(Rails)
