@@ -1,5 +1,7 @@
 Voltron.setup do |config|
 
+	# === Voltron Base Configuration ===
+
 	# Whether to enable debug output in the browser console and terminal window
 	config.debug = true
 
