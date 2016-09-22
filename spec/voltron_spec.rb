@@ -34,6 +34,16 @@ describe Voltron do
 
 	it "should log to the defined logger" do
 		expect(Voltron.config.logger).to receive(:info).with("[Voltron] [Tag] Test 1")
-		Voltron.log "Test 1", "Tag"
+		Voltron.log("Test 1", "Tag")
+	end
+
+	it "should output log messages to STDOUT" do
+		Voltron.config.debug = true
+		expect { Voltron.log("Test 2", "Tag") }.to output("[Voltron] [Tag] Test 2\n").to_stdout
+	end
+
+	it "should output log messages in color to STDOUT" do
+		Voltron.config.debug = true
+		expect { Voltron.log("Test 3", "Tag", :light_red) }.to output("[Voltron] [Tag] Test 3".light_red + "\n").to_stdout
 	end
 end

@@ -24,11 +24,11 @@ module Voltron
 		config.packages.map(&:to_s).include?(package.to_s)
 	end
 
-	def self.log(message, tag, color = :white)
+	def self.log(message, tag, color = nil)
 		@logger ||= ActiveSupport::TaggedLogging.new(config.logger)
 		if config.debug
 			message = "[Voltron] [#{tag}] #{message}"
-			if message.respond_to? color
+			if !color.nil? && message.respond_to?(color)
 				puts message.send color
 			else
 				puts message
@@ -37,3 +37,5 @@ module Voltron
 		@logger.tagged(Time.now.strftime("%Y-%m-%d %I:%M:%S %Z")) { @logger.tagged("Voltron") { @logger.tagged(tag) { @logger.info message } } }
 	end
 end
+
+require "voltron/railtie" if defined?(Rails)
