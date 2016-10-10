@@ -11,9 +11,7 @@ var Voltron = (function($){
 
 			// Try and create a module with the name of the current controller
 			var page = $('body').data('page');
-			this.ready(function(page){
-				Voltron.getModule(page);
-			}, [page]);
+			this.ready(Voltron.getModule, page);
 		},
 
 		// When ready, fire the callback function, passing in any additional args
@@ -109,6 +107,7 @@ var Voltron = (function($){
 
 		// Get a module with the given name from the list of modules
 		getModule: function(id, args){
+			console.error(id, args);
 			id = id.toLowerCase();
 			if(!args) args = [];
 			if(this.hasModule(id)){
