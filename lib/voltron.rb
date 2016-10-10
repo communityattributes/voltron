@@ -20,10 +20,6 @@ module Voltron
     @asset ||= Voltron::Asset.new
   end
 
-  def self.has_package?(package)
-    config.packages.map(&:to_s).include?(package.to_s)
-  end
-
   def self.log(message, tag, color = nil)
     @logger ||= ActiveSupport::TaggedLogging.new(config.logger)
     if config.debug

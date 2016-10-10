@@ -11,7 +11,4 @@ Voltron.setup do |config|
   # What logger calls to Voltron.log should use
   # config.logger = Logger.new(Rails.root.join("log", "voltron.log"))
 
-  # What Voltron libraries should be loaded on startup
-  # config.packages = []
-
 end

@@ -15,15 +15,6 @@ describe Voltron do
     expect(Voltron.config.base_url).to eq("http://www.example.com/")
   end
 
-  it "should have defined package" do
-    Voltron.setup do |config|
-      config.debug = true
-      config.packages << "test"
-    end
-
-    expect(Voltron.has_package?("test")).to eq(true)
-  end
-
   it "should have an asset class accessible via .asset" do
     expect(Voltron.asset).to be_a(Voltron::Asset)
   end
