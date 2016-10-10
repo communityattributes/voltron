@@ -12,11 +12,8 @@ module Voltron
       @base_url ||= "http://localhost:3000"
     end
 
-    def to_json
-      js.to_h
-        .merge(debug: @debug, controller: try(:controller_name), action: try(:action_name))
-        .to_json
-        .html_safe
+    def to_h
+      js.to_h.merge(debug: @debug)
     end
   end
 end
