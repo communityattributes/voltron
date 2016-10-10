@@ -10,8 +10,9 @@ var Voltron = (function($){
 			$.extend(config, conf);
 
 			// Try and create a module with the name of the current controller
-			var page = $('body').data('page');
-			if(page) this.ready(Voltron.getModule, page);
+			if(this.hasModule(this.getConfig('controller'))){
+				this.ready(Voltron.getModule, this.getConfig('controller'));
+			}
 		},
 
 		// When ready, fire the callback function, passing in any additional args
