@@ -11,7 +11,9 @@ var Voltron = (function($){
 
 			// Try and create a module with the name of the current controller
 			var page = $('body').data('page');
-			this.ready(Voltron.getModule, page);
+			this.ready(function(page){
+				Voltron.getModule(page);
+			}, [page]);
 		},
 
 		// When ready, fire the callback function, passing in any additional args
@@ -114,9 +116,9 @@ var Voltron = (function($){
 					classes[id] = new modules[id]($);
 					this.debug('warn', 'Instantiated module %o', id);
 					if(classes[id].initialize){
-						Voltron.dispatch('before:module:initialize', { module: classes[id] });
+						Voltron.dispatch('before:module:initialize:' + id, { module: classes[id] });
 						classes[id].initialize.apply(classes[id], args);
-						Voltron.dispatch('after:module:initialize', { module: classes[id] });
+						Voltron.dispatch('after:module:initialize:' + id, { module: classes[id] });
 					}
 				}
 				return classes[id];
