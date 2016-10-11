@@ -53,6 +53,10 @@ var Voltron = (function($){
 			return this;
 		},
 
+		getAuthToken: function(){
+			return this.getConfig('auth_token', '');
+		},
+
 		// Are we in debug mode?
 		isDebugging: function(){
 			return this.getConfig('debug', false);

@@ -8,23 +8,34 @@ Voltron.addModule('Dispatch', function(){
 		},
 
 		addDispatchEvents: function(){
-			$('[data-dispatch]').on('click', this.trigger);
+			$('[data-dispatch]').each(function(){
+				var element = $(this);
+				if(element.data('dispatch') === true){
+					element.on('click mouseenter mouseleave', Voltron.getModule('Dispatch').trigger);
+				}else{
+					var events = element.data('dispatch').split(/\s+/);
+					var listeners = [];
+					$.each(events, function(index, event){
+						listeners.push(event.split(':', 2).shift());
+					});
+					element.on(listeners.join(' '), Voltron.getModule('Dispatch').trigger);
+				}
+			});
 			$('input[data-dispatch], textarea[data-dispatch], select[data-dispatch]').on('change input', this.trigger);
 			$('form[data-dispatch]').on('submit', this.trigger);
 		},
 
 		addFormEvents: function(){
-			$('form').on('ajax:success', function(event, data, status, xhr){
-				Voltron.getModule('Dispatch').trigger.call(this, event, { data: data, status: status, xhr: xhr });
-			})
-			.on('ajax:error', function(event, xhr, status, error){
-				Voltron.getModule('Dispatch').trigger.call(this, event, { xhr: xhr, status: status, error: error });
-			});
+			$('body')
+				.on('ajax:success', function(event, data, status, xhr){
+					Voltron.getModule('Dispatch').trigger.call(event.target, event, { data: data, status: status, xhr: xhr });
+				})
+				.on('ajax:error', function(event, xhr, status, error){
+					Voltron.getModule('Dispatch').trigger.call(event.target, event, { xhr: xhr, status: status, error: error });
+				});
 		},
 
 		trigger: function(event, args){
-			event.stopImmediatePropagation();
-
 			if(!args) args = {}; 
 			var params = $.extend(args, { element: this, event: event });
 
