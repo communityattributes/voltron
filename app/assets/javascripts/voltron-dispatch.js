@@ -10,8 +10,11 @@ Voltron.addModule('Dispatch', function(){
 		addDispatchEvents: function(){
 			$('[data-dispatch]').each(function(){
 				var element = $(this);
+				if(element.data('_dispatcher')) return false;
+				element.data('_dispatcher', true);
+
 				if(element.data('dispatch') === true){
-					element.on('click mouseenter mouseleave', Voltron.getModule('Dispatch').trigger);
+					element.on('click', Voltron.getModule('Dispatch').trigger);
 				}else{
 					var events = element.data('dispatch').split(/\s+/);
 					var listeners = [];
@@ -21,8 +24,22 @@ Voltron.addModule('Dispatch', function(){
 					element.on(listeners.join(' '), Voltron.getModule('Dispatch').trigger);
 				}
 			});
-			$('input[data-dispatch], textarea[data-dispatch], select[data-dispatch]').on('change input', this.trigger);
-			$('form[data-dispatch]').on('submit', this.trigger);
+
+			$('input[data-dispatch], textarea[data-dispatch], select[data-dispatch]').each(function(){
+				var element = $(this);
+				if(element.data('_dispatcher')) return false;
+				element.data('_dispatcher', true);
+
+				element.on('change input', Voltron.getModule('Dispatch').trigger);
+			});
+
+			$('form[data-dispatch]').each(function(){
+				var element = $(this);
+				if(element.data('_dispatcher')) return false;
+				element.data('_dispatcher', true);
+
+				element.on('submit', Voltron.getModule('Dispatch').trigger);
+			});
 		},
 
 		addFormEvents: function(){
