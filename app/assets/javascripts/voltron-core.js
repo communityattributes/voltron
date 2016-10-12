@@ -34,10 +34,19 @@ var Voltron = (function($){
 
 		// Get a config value, optionally define a default value in the event the config param is not defined
 		getConfig: function(key, def){
-			if(config[key] != undefined){
-				return config[key];
-			}
-			return def;
+			var paths = key.replace(/(^\/+)|(\/+$)/g, '').split('/');
+			var out = config;
+
+			$.each(paths, function(index, path){
+				if(out[path] != undefined){
+					out = out[path];
+				}else{
+					out = def;
+					return false;
+				}
+			});
+
+			return out;
 		},
 
 		// Set a config value
