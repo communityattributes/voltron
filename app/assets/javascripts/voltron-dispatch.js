@@ -52,8 +52,9 @@ Voltron.addModule('Dispatch', function(){
       if(events.includes(event.type)){
         if($(this).data('event')){
           Voltron.dispatch([event.type, this.tagName, $(this).data('event')].compact().join(':').toLowerCase(), params);
+        }else{
+          Voltron.dispatch([event.type, this.tagName, this.id].compact().join(':').toLowerCase(), params);
         }
-        Voltron.dispatch([event.type, this.tagName, this.id].compact().join(':').toLowerCase(), params);
       }
     }
   };
