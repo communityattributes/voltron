@@ -1,70 +1,60 @@
 //= require voltron
 
 Voltron.addModule('Dispatch', function(){
-	return {
-		initialize: function(){
-			this.addDispatchEvents();
-			this.addFormEvents();
-		},
+  var events = {};
 
-		addDispatchEvents: function(){
-			$('[data-dispatch]').each(function(){
-				var element = $(this);
-				if(element.data('_dispatcher')) return false;
-				element.data('_dispatcher', true);
+  return {
+    addEventWatcher: function(event, args){
+      if(!$.isArray(args)) args = [];
+      events[event] = args;
+      Voltron.debug('info', 'Added event watcher for %o', event);
+      return this;
+    },
 
-				if(element.data('dispatch') === true){
-					element.on('click', Voltron.getModule('Dispatch').trigger);
-				}else{
-					var events = element.data('dispatch').split(/\s+/);
-					var listeners = [];
-					$.each(events, function(index, event){
-						listeners.push(event.split(':', 2).shift());
-					});
-					element.on(listeners.join(' '), Voltron.getModule('Dispatch').trigger);
-				}
-			});
+    listen: function(){
+      if(!$('body').data('_dispatch')){
+        $('body').data('_dispatch', true);
+        $('body').on(this.getEvents(), '[data-dispatch]', Voltron.getModule('Dispatch').trigger);
+        Voltron.debug('info', 'Voltron dispatcher listening.');
+      }
+      return this;
+    },
 
-			$('input[data-dispatch], textarea[data-dispatch], select[data-dispatch]').each(function(){
-				var element = $(this);
-				if(element.data('_dispatcher')) return false;
-				element.data('_dispatcher', true);
+    getEvents: function(){
+      return $.map(events, function(val,key){
+        return key;
+      }).join(' ');
+    },
 
-				element.on('change input', Voltron.getModule('Dispatch').trigger);
-			});
+    getHash: function(keys, vals){
+      return keys.length === vals.length ? keys.reduce(function(obj, key, index){
+        obj[key] = vals[index];
+        return obj;
+      }, {}) : {};
+    },
 
-			$('form[data-dispatch]').each(function(){
-				var element = $(this);
-				if(element.data('_dispatcher')) return false;
-				element.data('_dispatcher', true);
+    getArgumentHash: function(event, args){
+      if(events[event]){
+        return this.getHash(events[event], args);
+      }
+      return {};
+    },
 
-				element.on('submit', Voltron.getModule('Dispatch').trigger);
-			});
-		},
+    trigger: function(){
+      if(!args) args = {};
+      var event = arguments[0];
+      var args = Array.prototype.slice.call(arguments, 1);
+      args = Voltron.getModule('Dispatch').getArgumentHash(event.type, args);
+      var params = $.extend(args, { element: this, event: event });
 
-		addFormEvents: function(){
-			$('body')
-				.on('ajax:success', function(event, data, status, xhr){
-					Voltron.getModule('Dispatch').trigger.call(event.target, event, { data: data, status: status, xhr: xhr });
-				})
-				.on('ajax:error', function(event, xhr, status, error){
-					Voltron.getModule('Dispatch').trigger.call(event.target, event, { xhr: xhr, status: status, error: error });
-				});
-		},
+      var events = $(this).data('dispatch').toString().split(/\s+/);
 
-		trigger: function(event, args){
-			if(!args) args = {}; 
-			var params = $.extend(args, { element: this, event: event });
-
-			if($(this).data('dispatch') === true){
-				Voltron.dispatch([event.type, this.tagName, this.id].compact().join(':').toLowerCase(), params);
-			}else if($(this).data('dispatch')){
-				Voltron.dispatch($(this).data('dispatch'), params);
-			}
-
-			// Dispatch a general event without the id in the name, but only if an id was provided,
-			// If an id was not provided then the above event will send the same thing
-			if(this.id || $(this).data('dispatch') !== true) Voltron.dispatch([event.type, this.tagName].join(':').toLowerCase(), params);
-		}
-	};
+      if(events.includes(event.type)){
+        if($(this).data('event')){
+          Voltron.dispatch([event.type, this.tagName, $(this).data('event')].compact().join(':').toLowerCase(), params);
+        }
+        Voltron.dispatch([event.type, this.tagName, this.id].compact().join(':').toLowerCase(), params);
+      }
+    }
+  };
 }, true);
