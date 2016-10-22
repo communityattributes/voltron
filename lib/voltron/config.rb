@@ -15,5 +15,6 @@ module Voltron
     def to_h
       js.to_h.merge(debug: @debug)
     end
+
   end
 end

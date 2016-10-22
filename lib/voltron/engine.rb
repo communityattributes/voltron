@@ -4,7 +4,7 @@ module Voltron
     config.autoload_paths += Dir["#{config.root}/lib/**/"]
 
     initializer "voltron.initialize" do
-    	::ActionView::Base.send :include, ::Voltron::ViewHelpers
+      ::ActionView::Base.send :include, ::Voltron::ViewHelper
     end
 
   end

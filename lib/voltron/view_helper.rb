@@ -1,5 +1,5 @@
 module Voltron
-  module ViewHelpers
+  module ViewHelper
 
     def voltron_include_tag
       javascript_tag "Voltron.initialize(#{voltron_config_json});", type: "text/javascript"
