@@ -23,7 +23,7 @@ Array.prototype.includes = function(what){
   if(typeof what == 'object'){
     var re = new RegExp(what);
     for(var i=0; i<this.length; i++){
-      if(re.test(this[i])){
+      if(re.test(this[i].toString())){
         return true;
       }
     }

@@ -45,7 +45,7 @@ Voltron.addModule('Dispatch', function(){
       var event = arguments[0];
       var args = Array.prototype.slice.call(arguments, 1);
       args = Voltron.getModule('Dispatch').getArgumentHash(event.type, args);
-      var params = $.extend(args, { element: this, event: event });
+      var params = $.extend(args, { element: this, event: event, data: $(this).data() });
 
       var events = $(this).data('dispatch').toString().split(/\s+/);
 
