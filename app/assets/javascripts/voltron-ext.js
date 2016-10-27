@@ -24,7 +24,7 @@ String.prototype.blank = function(){
 // Array
 
 Array.prototype.compact = function(){
-  for(var i=1; i<this.length; i++){
+  for(var i=0; i<this.length; i++){
     if(this[i] == undefined || this[i] == null || this[i].blank()){
       this.splice(i, 1);
       i--;
