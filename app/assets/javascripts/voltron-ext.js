@@ -24,16 +24,13 @@ String.prototype.blank = function(){
 // Array
 
 Array.prototype.compact = function(){
-  // Because JS is often dumb, prepend an item that we'll remove later
-  // http://stackoverflow.com/questions/33136894/array-splice-does-not-remove-element-at-zero-index-when-the-indexed-variable-i
-  this.unshift(null);
   for(var i=1; i<this.length; i++){
     if(this[i] == undefined || this[i].blank()){
       this.splice(i, 1);
+      i--;
     }
   }
-  // Ignore the item we prepended, return the rest of the array
-  return this.slice(1);
+  return this;
 };
 
 Array.prototype.includes = function(what){
