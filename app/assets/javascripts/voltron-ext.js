@@ -1,16 +1,3 @@
-// Object
-Object.prototype.blank = function(){
-  if(this === null) return true;
-
-  for(var prop in this){
-    if(this.hasOwnProperty(prop)){
-      return false;
-    }
-  }
-
-  return true;
-};
-
 // String
 
 String.prototype.trim = function(){
