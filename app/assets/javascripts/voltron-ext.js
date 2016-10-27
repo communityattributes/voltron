@@ -1,3 +1,16 @@
+// Object
+Object.prototype.blank = function(){
+  if(this === null) return true;
+
+  for(var prop in this){
+    if(this.hasOwnProperty(prop)){
+      return false;
+    }
+  }
+
+  return true;
+};
+
 // String
 
 String.prototype.trim = function(){
@@ -12,7 +25,7 @@ String.prototype.blank = function(){
 
 Array.prototype.compact = function(){
   for(var i=0; i<this.length; i++){
-    if(this[i] == undefined || this[i].toString().blank()){
+    if(this[i] == undefined || this[i].blank()){
       this.splice(i, 1);
     }
   }
