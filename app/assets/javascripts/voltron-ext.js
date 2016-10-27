@@ -12,7 +12,7 @@ String.prototype.blank = function(){
 
 Array.prototype.compact = function(){
   for(var i=0; i<this.length; i++){
-    if(this[i] == undefined || this[i] == null || this[i].blank()){
+    if(!this[i] || (typeof this[i].blank == 'function' && this[i].blank())){
       this.splice(i, 1);
       i--;
     }
