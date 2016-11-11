@@ -35,6 +35,7 @@ var Voltron = (function($){
 
     // Get a config value, optionally define a default value in the event the config param is not defined
     getConfig: function(key, def){
+      if(!key) return config;
       var paths = key.replace(/(^\/+)|(\/+$)/g, '').split('/');
       var out = config;
 
@@ -91,11 +92,24 @@ var Voltron = (function($){
     // Dispatch an event, optionally providing some additional params to pass to the event listener callback
     dispatch: function(name, params){
       if(!params) params = {};
-      this.debug('info', 'Dispatching', name);
+      this.debug('info', 'Dispatching %o', name);
       $.each(observer[name], function(index, callback){
         callback.call(Voltron, params);
       });
       return this;
+    },
+
+    new: function(id){
+      if(this.hasModule(id)){
+        if($.isFunction(this.getModule(id).new)){
+          return this.getModule(id).new.apply(this.getModule(id), Array.prototype.slice.call(arguments, 1));
+        }else{
+          this.debug('warn', 'Module %o has not defined a %o method.', id, 'new');
+        }
+      }else{
+        this.debug('warn', 'Module with name %o does not exist.', id);
+      }
+      return false;
     },
 
     // Check if a module with the given name has been added
@@ -118,7 +132,7 @@ var Voltron = (function($){
 
       // Wait until DOM loaded, then create instances of any modules that should be created
       this.ready(function(id, depends, run){
-        if(run === true || this.isController(run)){
+        if(run === true || (this.isController(run) && run !== false)){
           for(var i=0; i<depends.length; i++){
             this.getModule(depends[i]);
           }
@@ -135,7 +149,7 @@ var Voltron = (function($){
       if(this.hasModule(id)){
         if(!classes[id]){
           classes[id] = new modules[id]($);
-          this.debug('warn', 'Instantiated module %o', name);
+          this.debug('info', 'Instantiated %o', name);
           if(classes[id].initialize){
             Voltron.dispatch('before:module:initialize:' + id, { module: classes[id] });
             classes[id].initialize.apply(classes[id], args);

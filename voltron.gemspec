@@ -27,4 +27,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec-rails", ">= 3.4"
   spec.add_development_dependency "sqlite3", ">= 1.2"
   spec.add_development_dependency "colorize", ">= 0.8.1"
+  spec.add_development_dependency "jquery-rails", "~> 4.2.0"
 end
