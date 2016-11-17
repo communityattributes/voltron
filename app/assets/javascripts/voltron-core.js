@@ -186,8 +186,8 @@ $.extend(Voltron, {
   }
 });
 
-if(typeof vv != 'undefined'){
-  console.warn('The window variable %o is already defined, so shortcut to %o will not be defined.', 'vv', 'Voltron');
+if(typeof V != 'undefined'){
+  console.warn('The window variable %o is already defined, so shortcut to %o will not be defined.', 'V', 'Voltron');
 }else{
-  window.vv = window.Voltron;
+  window.V = window.Voltron;
 }
