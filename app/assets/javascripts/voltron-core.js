@@ -125,7 +125,7 @@ $.extend(Voltron, {
     if(!params) params = {};
     this.debug('info', 'Dispatching %o', name);
     $.each(this._observer[name], function(index, callback){
-      callback.call(Voltron, params);
+      callback(params);
     });
     return this;
   },
