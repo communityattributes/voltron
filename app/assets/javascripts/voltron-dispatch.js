@@ -5,12 +5,12 @@ Voltron.addModule('Dispatch', function(){
   var events = {};
 
   return {
-    addEventWatcher: function(event, args){
-      args = [args].compact().flatten();
+    addEventWatcher: function(event){
+      var args = Array.prototype.slice.call(arguments, 1).flatten().compact();
       events[event] = args;
       $.each(args, function(index, evt){
         if(['element', 'event', 'data'].includes(evt.toLowerCase())){
-          Voltron.debug('error', "Provided event watcher argument %o is a reserved observer param and will be overridden when the event is dispatched. Consider changing the name of the argument in your call to addEventWatcher for %o", evt, event);
+          Voltron.debug('error', 'Provided event watcher argument %o is a reserved observer param and will be overridden when the event is dispatched. Consider changing the name of the argument in your call to addEventWatcher for %o', evt, event);
         }
       });
       Voltron.debug('info', 'Added event watcher for %o', event);
