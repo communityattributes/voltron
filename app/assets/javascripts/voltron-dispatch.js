@@ -79,6 +79,8 @@ Voltron.addModule('Dispatch', function(){
     },
 
     chain: function(event, params, chainable){
+      // chainable helps prevent recursion, since the event 'click' could trigger something
+      // beginning with the same word, i.e. - 'clickable', it would loop endlessly.
       if(chainable){
         $.each(_chains, function(chain, then){
           if(event.startsWith(chain)){
@@ -87,20 +89,20 @@ Voltron.addModule('Dispatch', function(){
             });
           }
         });
-
-        $.each(_callbacks, function(callback, callbacks){
-          if(event.startsWith(callback)){
-            $.each(callbacks, function(index, cb){
-              if(typeof cb[0] == 'string'){
-                cb[1].unshift(cb[0]);
-                Voltron.apply(Voltron, cb[1]);
-              }else if(typeof cb[0] == 'function'){
-                cb[0].apply(Voltron, cb[1]);
-              }
-            });
-          }
-        });
       }
+
+      $.each(_callbacks, function(callback, callbacks){
+        if(event.startsWith(callback)){
+          $.each(callbacks, function(index, cb){
+            if(typeof cb[0] == 'string'){
+              cb[1].unshift(cb[0]);
+              Voltron.apply(Voltron, cb[1]);
+            }else if(typeof cb[0] == 'function'){
+              cb[0].apply(Voltron, cb[1]);
+            }
+          });
+        }
+      });
     },
 
     trigger: function(){
