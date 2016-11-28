@@ -8,6 +8,16 @@ String.prototype.blank = function(){
   return this.trim() == '';
 };
 
+String.prototype.startsWith = function(what){
+  var re = new RegExp('^' + what.toString());
+  return re.test(this.trim());
+};
+
+String.prototype.endsWidth = function(what){
+  var re = new RegExp(what.toString() + '$');
+  return re.test(this.trim());
+};
+
 // Array
 
 Array.prototype.compact = function(){

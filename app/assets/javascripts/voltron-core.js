@@ -121,12 +121,13 @@ $.extend(Voltron, {
   },
 
   // Dispatch an event, optionally providing some additional params to pass to the event listener callback
-  dispatch: function(name, params){
+  dispatch: function(name, params, chainable){
     if(!params) params = {};
     this.debug('info', 'Dispatching %o', name);
     $.each(this._observer[name], function(index, callback){
       callback(params);
     });
+    Voltron('Dispatch/chain', name, params, !(chainable === false));
     return this;
   },
 
