@@ -23,5 +23,6 @@ module Voltron
           @custom[method.to_s.chomp("=")] = value
         end
     end
+
   end
 end
