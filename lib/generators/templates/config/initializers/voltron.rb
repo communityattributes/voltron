@@ -11,4 +11,10 @@ Voltron.setup do |config|
   # What logger calls to Voltron.log should use
   # config.logger = Logger.new(Rails.root.join("log", "voltron.log"))
 
+  # Whether to allow the flash! method to pass messages through http headers on ajax responses
+  # config.flash.enabled = true
+
+  # What http header the flash messages should be added to on ajax responses
+  # config.flash.header = "X-Flash"
+
 end
