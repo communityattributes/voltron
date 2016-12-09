@@ -5,7 +5,7 @@ module Voltron
 
     initializer "voltron.initialize" do
       ::ActionView::Base.send :include, ::Voltron::ViewHelper
-      ::ActionController::Base.send :include, ::Voltron::ActionController
+      ::ActionController::Base.send :include, ::Voltron::FlashHelper
     end
 
   end
