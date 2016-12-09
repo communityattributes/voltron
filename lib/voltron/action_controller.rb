@@ -1,7 +1,11 @@
 module Voltron
   module ActionController
 
-    after_action :include_flash
+    extend ActiveSupport::Concern
+
+    included do
+      after_action :include_flash
+    end
 
     def flash!(**flashes)
       @_flashes ||= {}
