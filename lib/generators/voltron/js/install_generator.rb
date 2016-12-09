@@ -9,7 +9,7 @@ module Voltron
 
         argument :modules, type: :array, default: []
 
-        class_option :version, type: :string, default: "master", desc: "Specify a specific module version to copy"
+        class_option :version, type: :string, default: "master", desc: "Specify a specific module version to install"
 
         desc "Install Voltron JS Modules"
 
