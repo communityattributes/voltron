@@ -1,3 +1,6 @@
+require "voltron/view_helper"
+require "voltron/flash_helper"
+
 module Voltron
   class Engine < Rails::Engine
 
