@@ -77,9 +77,22 @@ $.extend(Voltron, {
     return out;
   },
 
-  // Set a config value
+  // Set a config value. Supports xpath syntax to change nested key values
+  // i.e. setConfig('a/b/c', true); will change the value of "c" to true
   setConfig: function(key, value){
-    this._config[key] = value;
+    var out = this._config;
+    var paths = key.replace(/(^\/+)|(\/+$)/g, '').split('/');
+    var change = paths.pop();
+
+    $.each(paths, function(index, path){
+      if(out[path] != undefined){
+        out = out[path];
+      }else{
+        return false;
+      }
+    });
+
+    out[change] = value;
     return this;
   },
 

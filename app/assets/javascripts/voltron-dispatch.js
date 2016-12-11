@@ -16,7 +16,7 @@ Voltron.addModule('Dispatch', function(){
         }
       });
       Voltron.debug('info', 'Added event watcher for %o', event);
-      return this;
+      return this.listen();
     },
 
     addEventChain: function(when, then){
@@ -50,17 +50,13 @@ Voltron.addModule('Dispatch', function(){
     },
 
     listen: function(){
-      if(!$('body').data('_dispatch')){
-        $('body').data('_dispatch', true);
-        $('body').on(this.getEvents(), '[data-dispatch]', Voltron.getModule('Dispatch').trigger);
-        Voltron.debug('info', 'Voltron dispatcher listening.');
-      }
+      $('body').off(this.getEvents()).on(this.getEvents(), '[data-dispatch]', Voltron.getModule('Dispatch').trigger);
       return this;
     },
 
     getEvents: function(){
       return $.map(_events, function(val,key){
-        return key;
+        return key + '.voltron';
       }).join(' ');
     },
 

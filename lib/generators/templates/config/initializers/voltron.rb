@@ -17,4 +17,7 @@ Voltron.setup do |config|
   # What http header the flash messages should be added to on ajax responses
   # config.flash.header = "X-Flash"
 
+  # Whether to group flash messages by type, or give each flash message it's own line, complete with close icon
+  # config.flash.group = true
+
 end

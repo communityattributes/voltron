@@ -1,6 +1,5 @@
 require "logger"
 require "voltron/config/js"
-require "voltron/config/flash"
 
 module Voltron
   class Config
