@@ -1,11 +1,9 @@
 module Voltron
   class Engine < Rails::Engine
 
-    config.autoload_paths += Dir["#{config.root}/lib/**/"]
+    isolate_namespace Voltron
 
-    initializer "voltron.initialize" do
-      ::ActionController::Base.send :include, ::Voltron::FlashHelper
-    end
+    config.autoload_paths += Dir["#{config.root}/lib/**/"]
 
   end
 end
