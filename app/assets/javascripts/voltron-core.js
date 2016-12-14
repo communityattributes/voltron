@@ -88,7 +88,7 @@ $.extend(Voltron, {
       if(out[path] != undefined){
         out = out[path];
       }else{
-        return false;
+        out = out[path] = {};
       }
     });
 
