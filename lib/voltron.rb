@@ -1,6 +1,7 @@
 require "voltron/version"
 require "voltron/config"
 require "voltron/asset"
+require "active_support/callbacks"
 
 begin
   require "colorize"
