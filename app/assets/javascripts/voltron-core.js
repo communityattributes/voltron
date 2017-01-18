@@ -51,7 +51,8 @@ $.extend(Voltron, {
   },
 
   debug: function(){
-    if(this.isDebugging()){
+    // IE/Edge only expose console when dev tools is open. Check for it's existence before attempting to call log/warn/error/info
+    if(this.isDebugging() && console){
       var method = arguments[0];
       var args = Array.prototype.slice.call(arguments, 1);
       console[method].apply(this, args);
@@ -120,9 +121,10 @@ $.extend(Voltron, {
   // Optionally with a defined context for what `this` will be in the callback function
   // If not defined it defaults to the core Voltron module, aka - the stuff in this file
   // Example: Voltron.on('event1', 'event2', 'event3', function(observer){}, this);
+  // OR: Voltron.on('event1 event2 event3', function(observer){}, this);
   on: function(){
     var args = Array.prototype.slice.call(arguments, 0);
-    var events = $.map(args, function(item){ if(typeof item == 'string') return item; });
+    var events = $.map(args, function(item){ if(typeof item == 'string') return item.split(/\s+/); }).flatten();
     var callback = args[events.length];
     var context = args[events.length+1] || Voltron;
 
@@ -201,7 +203,7 @@ $.extend(Voltron, {
 });
 
 if(typeof V != 'undefined'){
-  console.warn('The window variable %o is already defined, so shortcut to %o will not be defined.', 'V', 'Voltron');
+  if(console) console.warn('The window variable %o is already defined, so shortcut to %o will not be defined.', 'V', 'Voltron');
 }else{
   window.V = window.Voltron;
 }

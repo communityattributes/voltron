@@ -6,6 +6,29 @@ Voltron.addModule('Dispatch', function(){
   var _chains = {};
   var _callbacks = {};
 
+  var Dispatcher = function(context){
+    var callbacks = {};
+
+    return {
+      add: function(event, callback){
+        if(!$.isArray(callbacks[event.toLowerCase()])){
+          callbacks[event.toLowerCase()] = [];
+        }
+        callbacks[event.toLowerCase()].push(callback);
+        return context || this;
+      },
+
+      dispatch: function(event){
+        if($.isArray(callbacks[event.toLowerCase()])){
+          for(var i=0; i<callbacks[event.toLowerCase()].length; i++){
+            callbacks[event.toLowerCase()][i].apply(context || this, Array.prototype.slice.call(arguments, 1));
+          }
+        }
+        return context || this;
+      }
+    };
+  };
+
   return {
     addEventWatcher: function(event){
       var args = Array.prototype.slice.call(arguments, 1).flatten().compact();
@@ -50,7 +73,7 @@ Voltron.addModule('Dispatch', function(){
     },
 
     listen: function(){
-      $('body').off(this.getEvents()).on(this.getEvents(), '[data-dispatch]', Voltron.getModule('Dispatch').trigger);
+      $('body').off(this.getEvents()).on(this.getEvents(), '[data-dispatch]', this.trigger);
       return this;
     },
 
@@ -101,9 +124,8 @@ Voltron.addModule('Dispatch', function(){
       });
     },
 
-    trigger: function(){
+    trigger: function(event){
       if(!args) args = {};
-      var event = arguments[0];
       var args = Array.prototype.slice.call(arguments, 1);
       args = Voltron('Dispatch/getArgumentHash', event.type, args);
       var params = $.extend(args, { element: this, event: event, data: $(this).data() });
@@ -119,6 +141,10 @@ Voltron.addModule('Dispatch', function(){
           Voltron.dispatch([event.type, this.tagName].join(':').toLowerCase(), params);
         }
       }
+    },
+
+    new: function(context){
+      return new Dispatcher(context);
     }
   };
 }, true);
