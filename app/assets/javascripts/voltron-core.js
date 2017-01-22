@@ -124,7 +124,7 @@ $.extend(Voltron, {
   // OR: Voltron.on('event1 event2 event3', function(observer){}, this);
   on: function(){
     var args = Array.prototype.slice.call(arguments, 0);
-    var events = $.map(args, function(item){ if(typeof item == 'string') return item.split(/\s+/); }).flatten();
+    var events = $.map(args, function(item){ if(typeof item == 'string') return item; });
     var callback = args[events.length];
     var context = args[events.length+1] || Voltron;
 
