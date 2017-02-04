@@ -73,6 +73,14 @@ Array.prototype.uniq = function(){
   return a;
 };
 
+Array.prototype.first = function(){
+  return this[0];
+};
+
+Array.prototype.last = function(){
+  return this[this.length-1];
+};
+
 // Boolean
 
 Boolean.prototype.blank = function(){
