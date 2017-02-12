@@ -1,3 +1,3 @@
 module Voltron
-  VERSION = "0.1.9.2".freeze
+  VERSION = "0.2.0".freeze
 end
