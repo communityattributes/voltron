@@ -13,7 +13,7 @@ module Voltron
     def initialize
       @logger = ::Logger.new(::Rails.root.join("log", "voltron.log"))
       @debug ||= false
-      @base_url ||= "http://localhost:3000"
+      @base_url ||= (Rails.application.config.action_controller.default_url_options.try(:[], :host) || "http://localhost:3000")
     end
 
     def to_h

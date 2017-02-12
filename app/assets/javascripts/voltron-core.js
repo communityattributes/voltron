@@ -60,6 +60,16 @@ $.extend(Voltron, {
     return this;
   },
 
+  getBaseUrl: function(){
+    if(!location.origin) location.origin = location.protocol + "//" + location.host;
+    return location.origin;
+  },
+
+  getPath: function(url){
+    if(!url) url = window.location.href;
+    return url.replace(this.getBaseUrl(), '');
+  },
+
   // Get a config value, optionally define a default value in the event the config param is not defined
   getConfig: function(key, def){
     var out = this._config;

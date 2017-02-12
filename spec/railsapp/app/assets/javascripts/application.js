@@ -12,4 +12,5 @@
 //
 //= require jquery
 //= require voltron
+//= require voltron-observer
 //= require_tree .
