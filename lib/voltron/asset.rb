@@ -12,5 +12,13 @@ module Voltron
       end
       assets
     end
+
+    def file_path(filename)
+      if Rails.application.config.assets.digest && Rails.application.config.assets.compile
+        filename = Rails.application.assets.find_asset(filename.to_s).try(:digest_path) || filename.to_s
+      end
+
+      File.join(Rails.application.config.assets.prefix, filename.to_s)
+    end
   end
 end

@@ -1,7 +1,7 @@
 module VoltronHelper
 
   def voltron_include_tag
-    javascript_tag "Voltron.initialize(#{voltron_config_json});", type: "text/javascript"
+    javascript_tag "Voltron.initialize(#{voltron_config_json});", type: 'text/javascript'
   end
 
   def voltron_config_json
