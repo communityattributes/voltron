@@ -3,8 +3,6 @@
 
 Voltron.addModule('Dispatch', function(){
   var _events = {};
-  var _chains = {};
-  var _callbacks = {};
 
   var Dispatcher = function(context){
     var callbacks = {};
@@ -42,36 +40,6 @@ Voltron.addModule('Dispatch', function(){
       return this.listen();
     },
 
-    addEventChain: function(when, then){
-      when = when.toLowerCase();
-      then = $.map([then].flatten(), function(item){
-        return item.toLowerCase();
-      });
-      if(!_chains[when]) _chains[when] = [];
-      $.each(then, function(index, t){
-        if(!_chains[when].includes(t)){
-          Voltron.debug('info', 'Added event chain. When an event name matching %o* is fired, %o will also be triggered.', when, t);
-          _chains[when].push(t);
-        }
-      });
-      return this;
-    },
-
-    addCallbackChain: function(when, callback){
-      when = when.toLowerCase();
-      if(!_callbacks[when]) _callbacks[when] = [];
-      if(typeof callback == 'string' || typeof callback == 'function'){
-        _callbacks[when].push([callback, Array.prototype.slice.call(arguments, 2)]);
-        if(typeof callback == 'string'){
-          Voltron.debug('info', 'Added callback chain. When an event name matching %o* is fired, %o will also be triggered.', when, callback);
-        }else if(typeof callback == 'function'){
-          Voltron.debug('info', 'Added callback chain. When an event name matching %o* is fired, the provided callback function will also be triggered.', when);
-        }
-      }else{
-        Voltron.debug('warn', 'Callback chain for %o* will not be added, the defined callback argument is not a string referencing a module method nor function.', when);
-      }
-    },
-
     listen: function(){
       $('body').off(this.getEvents()).on(this.getEvents(), '[data-dispatch]', this.trigger);
       return this;
@@ -97,33 +65,6 @@ Voltron.addModule('Dispatch', function(){
       return {};
     },
 
-    chain: function(event, params, chainable){
-      // chainable helps prevent recursion, since the event 'click' could trigger something
-      // beginning with the same word, i.e. - 'clickable', it would loop endlessly.
-      if(chainable){
-        $.each(_chains, function(chain, then){
-          if(event.startsWith(chain)){
-            $.each(then, function(index, t){
-              Voltron.dispatch(t, params, false);
-            });
-          }
-        });
-      }
-
-      $.each(_callbacks, function(callback, callbacks){
-        if(event.startsWith(callback)){
-          $.each(callbacks, function(index, cb){
-            if(typeof cb[0] == 'string'){
-              cb[1].unshift(cb[0]);
-              Voltron.apply(Voltron, cb[1]);
-            }else if(typeof cb[0] == 'function'){
-              cb[0].apply(Voltron, cb[1]);
-            }
-          });
-        }
-      });
-    },
-
     trigger: function(event){
       if($(this).data('dispatch')){
         if(!args) args = {};
@@ -132,17 +73,44 @@ Voltron.addModule('Dispatch', function(){
         var params = $.extend(args, { element: this, event: event, data: $(this).data() });
 
         var events = params.data.dispatch.split(/\s+/);
+        var target = Voltron('Dispatch/getDispatchTarget', params, this);
 
         if(events.includes(event.type)){
-          if(params.data.event){
-            Voltron.dispatch([event.type, params.data.event].join(':').toLowerCase(), params);
-          }else if(this.id){
-            Voltron.dispatch([event.type, this.id].join(':').toLowerCase(), params);
-          }else{
-            Voltron.dispatch([event.type, this.tagName].join(':').toLowerCase(), params);
+
+          var moduleName = $(this).data('module') || Voltron.getConfig('controller');
+
+          if(Voltron.hasModule(moduleName)){
+            var module = Voltron.getModule($(this).data('module') || Voltron.getConfig('controller'));
+            var method = Voltron('Dispatch/getDispatchMethod', event.type, target);
+
+            if($.isFunction(module[method])){
+              Voltron.debug('info', 'Dispatching callback function %o', module.name() + '/' + method);
+              module[method](params);
+              return; // Exit out, so we don't dispatch a separate event
+            }else{
+              Voltron.debug('warn', 'Module %o was defined but callback function %o does not exist. Continuing with standard dispatcher.', module.name(), method);
+            }
           }
+
+          Voltron.dispatch([event.type, target].join(':').toLowerCase(), params);
         }
       }
+    },
+
+    getDispatchTarget: function(params, element){
+      if(params.data.event){
+        return params.data.event.toLowerCase();
+      }else if(element.id){
+        return element.id.toLowerCase();
+      }
+      return element.tagName.toLowerCase();
+    },
+
+    getDispatchMethod: function(event, target){
+      var method = ['on', event, target].join('_');
+      return method.replace(/_([a-z0-9])|\-([a-z0-9])/ig, function(match){
+        return match[1].toUpperCase();
+      });
     },
 
     new: function(context){

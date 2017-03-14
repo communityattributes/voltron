@@ -2,6 +2,7 @@ Voltron.addModule('Site', function(){
   return {
     initialize: function(){
       Voltron('Dispatch/addEventWatcher', 'click');
+      Voltron('Dispatch/addEventWatcher', 'mouseover');
       Voltron('Dispatch/addEventWatcher', 'hide');
       Voltron('Dispatch/addEventWatcher', 'show');
       Voltron('Dispatch/addEventWatcher', 'add');
@@ -12,7 +13,7 @@ Voltron.addModule('Site', function(){
       // Create 1400 divs to test performance of show/hide event
       for(var k=0; k<10; k++){
         for(var i=0; i<colors.length; i++){
-          $('body').append($('<div />', { class: 'new-div', 'data-dispatch': 'add remove hide show' }).css('background-color', colors[i]));
+          $('body').append($('<div />', { class: 'new-div', 'data-dispatch': 'add remove hide show', 'data-event': 'box' }).css('background-color', colors[i]));
         }
       }
 
@@ -27,6 +28,14 @@ Voltron.addModule('Site', function(){
       setTimeout(function(){
         $('.new-div').slideUp(2000);
       }, 3000);
+    },
+
+    onClickCustomButton: function(o){
+      console.log(o);
+    },
+
+    onHideBox: function(o){
+      console.log(o);
     }
   };
 }, true);

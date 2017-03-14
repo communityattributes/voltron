@@ -23,11 +23,17 @@ $.extend(Voltron, {
   _classes: {},
 
   _inherited: {
+    _name: null,
+
     on: function(){
       var args = Array.prototype.slice.call(arguments, 0);
       args.push(this);
       Voltron.on.apply(Voltron, args);
       return this;
+    },
+
+    name: function(){
+      return this._name;
     }
   },
 
@@ -146,13 +152,12 @@ $.extend(Voltron, {
   },
 
   // Dispatch an event, optionally providing some additional params to pass to the event listener callback
-  dispatch: function(name, params, chainable){
+  dispatch: function(name, params){
     if(!params) params = {};
     this.debug('info', 'Dispatching %o', name);
     $.each(this._observer[name], function(index, callback){
       callback(params);
     });
-    Voltron('Dispatch/chain', name, params, !(chainable === false));
     return this;
   },
 
@@ -171,6 +176,10 @@ $.extend(Voltron, {
     var run = $.isFunction(arguments[1]) ? arguments[2] : arguments[3];
 
     if(!this.hasModule(id)){
+      id = $.camelCase(id).replace(/\b[a-z]/g, function(letter){
+        return letter.toUpperCase();
+      });
+      this[id] = module;
       this._modules[id.toLowerCase()] = module;
     }
 
@@ -195,6 +204,8 @@ $.extend(Voltron, {
         this._classes[id] = new this._modules[id]($);
         // Add some inherited methods... shortcuts, if you will
         this._classes[id] = $.extend(this._classes[id], this._inherited);
+        // Add the name to the module
+        this._classes[id]._name = name;
         // Tell the user we've created the module
         this.debug('info', 'Instantiated %o', name);
         // If there is an initialize function, call it, dispatching before/after events
