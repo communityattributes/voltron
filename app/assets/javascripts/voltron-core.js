@@ -154,10 +154,14 @@ $.extend(Voltron, {
   // Dispatch an event, optionally providing some additional params to pass to the event listener callback
   dispatch: function(name, params){
     if(!params) params = {};
-    this.debug('info', 'Dispatching %o', name);
-    $.each(this._observer[name], function(index, callback){
-      callback(params);
-    });
+    if(this._observer[name]){
+      this.debug('info', 'Dispatching %o', name);
+      $.each(this._observer[name], function(index, callback){
+        if($.isFunction(callback)){
+          callback(params);
+        }
+      });
+    }
     return this;
   },
 
