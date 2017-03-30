@@ -18,6 +18,11 @@ String.prototype.endsWidth = function(what){
   return re.test(this.trim());
 };
 
+String.prototype.contains = function(what){
+  var re = new RegExp(what.toString(), 'i');
+  return re.test(this);
+};
+
 // Array
 
 Array.prototype.compact = function(){

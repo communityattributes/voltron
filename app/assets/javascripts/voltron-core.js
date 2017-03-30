@@ -130,7 +130,7 @@ $.extend(Voltron, {
   },
 
   isController: function(controllers){
-    return [controllers].flatten().compact().includes(this.getConfig('controller'));
+    return $.map([controllers].flatten().compact(), function(c){ return c.toLowerCase(); }).includes(this.getConfig('controller'));
   },
 
   // Adds one or more event listener callbacks that will be dispatched when the event occurs
@@ -154,20 +154,18 @@ $.extend(Voltron, {
   // Dispatch an event, optionally providing some additional params to pass to the event listener callback
   dispatch: function(name, params){
     if(!params) params = {};
-    if(this._observer[name]){
-      this.debug('info', 'Dispatching %o', name);
-      $.each(this._observer[name], function(index, callback){
-        if($.isFunction(callback)){
-          callback(params);
-        }
-      });
-    }
+    this.debug('info', 'Dispatching %o', name);
+    $.each(this._observer[name], function(index, callback){
+      if($.isFunction(callback)){
+        callback(params);
+      }
+    });
     return this;
   },
 
   // Check if a module with the given name has been added
   hasModule: function(id){
-    return this._modules[id.toLowerCase()] != undefined;
+    return $.isFunction(this._modules[id.toLowerCase()]);
   },
 
   // Add a module, specifying the name (id), the module itself (should be an object or a function that returns such)
@@ -189,9 +187,17 @@ $.extend(Voltron, {
 
     // Wait until DOM loaded, then create instances of any modules that should be created
     this.ready(function(id, depends, run){
-      if(run === true || (this.isController(run) && run !== false)){
-        for(var i=0; i<depends.length; i++){
-          this.getModule(depends[i]);
+      if(run === true || ((this.isController(run) || this.isController(id)) && run !== false)){
+        if(depends == '*'){
+          $.each(Voltron._modules, function(name, module){
+            if(name.toLowerCase() != id.toLowerCase()){
+              Voltron.getModule(name);
+            }
+          });
+        }else{
+          for(var i=0; i<depends.length; i++){
+            this.getModule(depends[i]);
+          }
         }
         this.getModule(id);
       }
@@ -202,6 +208,11 @@ $.extend(Voltron, {
   // Get a module with the given name from the list of modules
   getModule: function(name, args){
     var id = name.toLowerCase();
+
+    name = $.camelCase(name).replace(/\b[a-z]/g, function(letter){
+      return letter.toUpperCase();
+    });
+
     if(!args) args = [];
     if(this.hasModule(id)){
       if(!this._classes[id]){

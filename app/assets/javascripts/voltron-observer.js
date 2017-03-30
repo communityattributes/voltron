@@ -7,25 +7,25 @@
  *
  * List of events that can now be observed:
  *
- *   +add+ When an element is added to the DOM
- *   +remove+ When an element is removed from the DOM
+ *   +added+ When an element is added to the DOM
+ *   +removed+ When an element is removed from the DOM
  *   +hide+ When an element on the DOM is hidden (defined as the result of jQuery's `:hidden` selector)
  *   +show+ When an element on the DOM is displayed (defined as the result of jQuery's `:visible` selector)
  *
  * Example usage, from within any method defined in a Voltron module:
  *
- *   Voltron.on('add:div', function(o){
+ *   Voltron.on('added:div', function(o){
  *     // Do things with the added element, context is +Voltron+
  *   });
  *   
  *   OR
  *
- *   this.on('add:div', function(o){
+ *   this.on('added:div', function(o){
  *     // Do things with the added element, context is the module in which this observer was defined
  *   });
  *
  */
-Voltron.addModule('Observer', function(){
+Voltron.addModule('Observer', '*', function(){
   'use strict';
 
   var _observer = null;
@@ -40,13 +40,12 @@ Voltron.addModule('Observer', function(){
 
   return {
     initialize: function(options){
-      Voltron('Dispatch/addEventWatcher', 'add');
-      Voltron('Dispatch/addEventWatcher', 'remove');
-      Voltron('Dispatch/addEventWatcher', 'show');
-      Voltron('Dispatch/addEventWatcher', 'hide');
-
       options = $.extend(_defaults, options);
       this.getObserver().observe(document.body, options);
+
+      // Trigger add and show events on start up for appropriate elements
+      $('[data-dispatch*="added"]').trigger('added');
+      $('[data-dispatch*="show"]:visible').trigger('show');
     },
 
     stop: function(){
@@ -62,13 +61,13 @@ Voltron.addModule('Observer', function(){
         var mutation = $(elements[i]).data('_mutation');
 
         if(mutation.type == 'childList'){
-          $(mutation.addedNodes).trigger('add');
+          $(mutation.addedNodes).trigger('added');
 
           // Need to iterate through removed nodes and manually dispatch
           // since at this point the element no longer exists in the DOM,
           // jQuery cannot observe any event that's `.trigger()`ed on it.
           for(var j=0; j<mutation.removedNodes.length; j++){
-            Voltron.getModule('Dispatch').trigger.call(mutation.removedNodes[j], new $.Event(null, { type: 'remove', target: mutation.removedNodes[j] }));
+            Voltron.getModule('Dispatch').trigger.call(mutation.removedNodes[j], new $.Event(null, { type: 'removed', target: mutation.removedNodes[j] }));
           }
         }else if(mutation.type == 'attributes'){
           var target = $(mutation.target);

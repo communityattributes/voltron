@@ -67,48 +67,69 @@ Voltron.addModule('Dispatch', function(){
 
     trigger: function(event){
       if($(this).data('dispatch')){
-        if(!args) args = {};
-        var args = Array.prototype.slice.call(arguments, 1);
-        args = Voltron('Dispatch/getArgumentHash', event.type, args);
+        var args = Voltron('Dispatch/getArgumentHash', event.type, Array.prototype.slice.call(arguments, 1));
         var params = $.extend(args, { element: this, event: event, data: $(this).data() });
 
-        var events = params.data.dispatch.split(/\s+/);
-        var target = Voltron('Dispatch/getDispatchTarget', params, this);
+        var dispatches = params.data.dispatch.split(/\s+/);
+        var events = {};
 
-        if(events.includes(event.type)){
+        for(var i=0; i<dispatches.length; i++){
+          events = $.extend(events, Voltron('Dispatch/getDispatchOptions', dispatches[i], params, this));
+        }
 
-          var moduleName = $(this).data('module') || Voltron.getConfig('controller');
+        if(events[event.type]){
+          var context = events[event.type]['context'];
+          var moduleName = events[event.type]['module'];
 
           if(Voltron.hasModule(moduleName)){
-            var module = Voltron.getModule($(this).data('module') || Voltron.getConfig('controller'));
-            var method = Voltron('Dispatch/getDispatchMethod', event.type, target);
+            var module = Voltron.getModule(moduleName);
+            var method = Voltron('Dispatch/getDispatchMethod', event.type, context);
 
             if($.isFunction(module[method])){
               Voltron.debug('info', 'Dispatching callback function %o', module.name() + '/' + method);
               module[method](params);
-              return; // Exit out, so we don't dispatch a separate event
+              return; // Exit so we are not unnecessarily dispatching events
             }else{
               Voltron.debug('warn', 'Module %o was defined but callback function %o does not exist. Continuing with standard dispatcher.', module.name(), method);
             }
           }
 
-          Voltron.dispatch([event.type, target].join(':').toLowerCase(), params);
+          Voltron.dispatch([event.type, context].join(':').toLowerCase(), params);
+
+          if(context != this.tagName.toLowerCase()){
+            Voltron.dispatch([event.type, this.tagName].join(':').toLowerCase(), params);
+          }
         }
       }
     },
 
-    getDispatchTarget: function(params, element){
-      if(params.data.event){
-        return params.data.event.toLowerCase();
-      }else if(element.id){
-        return element.id.toLowerCase();
+    getDispatchOptions: function(dispatch, params, element){
+      var defaultModule = params.data.module || Voltron.getConfig('controller');
+      var options = [];
+
+      if((matches = dispatch.match(/^([a-z_\-]+):([a-z\_\-:]+)\/([a-z\_\-]+)/i)) !== null){
+        // Match format: "module:action/context"
+        options[matches[2]] = { context: matches[3], module: matches[1] };
+      }else if((matches = dispatch.match(/^([a-z\_\-:]+)\/([a-z\_\-]+)/i)) !== null){
+        // Match format: "action/context", using default module
+        options[matches[1]] = { context: matches[2], module: defaultModule };
+      }else if((matches = dispatch.match(/^([a-z\_\-:]+)$/i)) !== null){
+        // Backward compatibility - Use data-event, element id, or tag name as context,
+        // depending on what is available. Use default module
+        if(params.data.event){
+          options[matches[1]] = { context: params.data.event.toLowerCase(), module: defaultModule };
+        }else if(element.id){
+          options[matches[1]] = { context: element.id.toLowerCase(), module: defaultModule };
+        }else{
+          options[matches[1]] = { context: element.tagName.toLowerCase(), module: defaultModule };
+        }
       }
-      return element.tagName.toLowerCase();
+      return options;
     },
 
     getDispatchMethod: function(event, target){
       var method = ['on', event, target].join('_');
-      return method.replace(/_([a-z0-9])|\-([a-z0-9])/ig, function(match){
+      return method.replace(/_([a-z0-9])|\-([a-z0-9])|:([a-z0-9])/ig, function(match){
         return match[1].toUpperCase();
       });
     },
