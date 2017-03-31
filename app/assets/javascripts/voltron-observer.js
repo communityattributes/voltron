@@ -60,15 +60,34 @@ Voltron.addModule('Observer', '*', function(){
       for(var i=0; i<elements.length; i++){
         var mutation = $(elements[i]).data('_mutation');
 
-        if(mutation.type == 'childList'){
-          $(mutation.addedNodes).trigger('added');
+        if(!mutation || !mutation.type) continue;
 
-          // Need to iterate through removed nodes and manually dispatch
-          // since at this point the element no longer exists in the DOM,
-          // jQuery cannot observe any event that's `.trigger()`ed on it.
-          for(var j=0; j<mutation.removedNodes.length; j++){
-            Voltron.getModule('Dispatch').trigger.call(mutation.removedNodes[j], new $.Event(null, { type: 'removed', target: mutation.removedNodes[j] }));
-          }
+        if(mutation.type == 'childList'){
+          // Flag nodes that have been added, and don't dispatch on any that have
+          // This solves the issue of recursion if an element that dispatches `added` is moved in the DOM
+          // Also dispatch only on elements that are configured to have `added` dispatched,
+          // including the element itself if applicable
+          $(mutation.addedNodes).filter(function(){
+            return !$(this).data('_mutation_added');
+          }).data('_mutation_added', true)
+            .find('[data-dispatch*="added"]')
+            .addBack('[data-dispatch*="added"]')
+            .trigger('added');
+
+          // Flag nodes that have been removed to avoid unnecessary dispatching
+          // Dispatch the removed event on any child elements configured to do so,
+          // including the element itself if applicable
+          // Event must be dispatched manually since at this point the element no
+          // longer exists in the DOM, and can't be trigger()'ed
+          $(mutation.removedNodes)
+          .filter(function(){
+            return !$(this).data('_mutation_removed');
+          }).data('_mutation_removed', true)
+            .find('[data-dispatch*="removed"]')
+            .addBack('[data-dispatch*="removed"]')
+            .each(function(){
+              Voltron.getModule('Dispatch').trigger.call(this, new $.Event(null, { type: 'removed', target: this }));
+            });
         }else if(mutation.type == 'attributes'){
           var target = $(mutation.target);
           // If currently animating, break out. We only want to dispatch when the state is truly reached
@@ -94,9 +113,17 @@ Voltron.addModule('Observer', '*', function(){
     },
 
     getMutationElements: function(mutations){
-      return $.uniqueSort($.map(mutations, function(mut){
-        return $(mut.target).data('_mutation', mut).get(0);
-      }));
+      if($.isFunction($.uniqueSort)){
+        // >= jQuery 3
+        return $.uniqueSort($.map(mutations, function(mut){
+          return $(mut.target).data('_mutation', mut).get(0);
+        }));
+      }else{
+        // < jQuery 3
+        return $.unique($.map(mutations, function(mut){
+          return $(mut.target).data('_mutation', mut).get(0);
+        }));
+      }
     }
   };
 }, true);
