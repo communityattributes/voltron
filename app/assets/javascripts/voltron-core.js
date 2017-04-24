@@ -61,7 +61,7 @@ $.extend(Voltron, {
     if(this.isDebugging() && console){
       var method = arguments[0];
       var args = Array.prototype.slice.call(arguments, 1);
-      console[method].apply(this, args);
+      console[method].apply(console, args);
     }
     return this;
   },
