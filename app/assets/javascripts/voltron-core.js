@@ -147,10 +147,11 @@ $.extend(Voltron, {
   },
 
   // Dispatch an event, optionally providing some additional params to pass to the event listener callback
-  dispatch: function(event, alias){
+  dispatch: function(event){
     var args = Array.prototype.slice.call(arguments, 0);
     var params = $.isPlainObject(args.last()) ? args.pop() : {};
     var modules = args.length > 2 ? args.slice(2) : Object.keys(this._modules);
+    var alias = args.length > 1 && !$.isPlainObject(args.last()) ? args.pop() : '';
     var method = Voltron('Dispatch/getDispatchMethod', event, alias);
     params = $.extend(true, { element: null, event: $.Event(event), data: {} }, params);
 
