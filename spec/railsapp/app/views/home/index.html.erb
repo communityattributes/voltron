@@ -1,3 +1,8 @@
-<button data-dispatch="click">Custom Button 1</button>
-<button data-dispatch="click mouseover" id="custom-button">Custom Button 2</button>
-<button data-dispatch="click" id="custom-button" data-event="custom-event">Custom Button</button>
+<div class="container">
+  <div class="section-0"><section><div data-dispatch="site:reveal/zero site:conceal/zero site:append site:remove" id="zero">0</div></section></div>
+  <div class="section-1"><section><div data-dispatch="site:reveal/one site:conceal/one site:append site:remove" id="one">1</div></section></div>
+</div>
+
+<button data-dispatch="site:click/special">Custom Button 1</button>
+<button data-dispatch="site:click" id="custom-button">Custom Button 2</button>
+<button data-dispatch="site:click" id="custom-button">Custom Button</button>

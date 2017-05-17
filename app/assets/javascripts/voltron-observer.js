@@ -7,21 +7,21 @@
  *
  * List of events that can now be observed:
  *
- *   +added+ When an element is added to the DOM
- *   +removed+ When an element is removed from the DOM
- *   +hide+ When an element on the DOM is hidden (defined as the result of jQuery's `:hidden` selector)
- *   +show+ When an element on the DOM is displayed (defined as the result of jQuery's `:visible` selector)
+ *   +append+ When an element is append to the DOM
+ *   +remove+ When an element is removed from the DOM
+ *   +conceal+ When an element on the DOM is hidden (defined as the result of jQuery's `:hidden` selector)
+ *   +reveal+ When an element on the DOM is displayed (defined as the result of jQuery's `:visible` selector)
  *
  * Example usage, from within any method defined in a Voltron module:
  *
- *   Voltron.on('added:div', function(o){
- *     // Do things with the added element, context is +Voltron+
+ *   Voltron.on('append:div', function(o){
+ *     // Do things with the appended element, context is +Voltron+
  *   });
  *   
  *   OR
  *
- *   this.on('added:div', function(o){
- *     // Do things with the added element, context is the module in which this observer was defined
+ *   this.on('append:div', function(o){
+ *     // Do things with the appended element, context is the module in which this observer was defined
  *   });
  *
  */
@@ -43,9 +43,9 @@ Voltron.addModule('Observer', '*', function(){
       options = $.extend(_defaults, options);
       this.getObserver().observe(document.body, options);
 
-      // Trigger add and show events on start up for appropriate elements
-      $('[data-dispatch*="added"]').trigger('added');
-      $('[data-dispatch*="show"]:visible').trigger('show');
+      // Trigger append and reveal events on start up for appropriate elements
+      $('[data-dispatch*="append"]').trigger('append');
+      $('[data-dispatch*="reveal"]:visible').trigger('reveal');
     },
 
     stop: function(){
@@ -68,25 +68,26 @@ Voltron.addModule('Observer', '*', function(){
           // Also dispatch only on elements that are configured to have `added` dispatched,
           // including the element itself if applicable
           $(mutation.addedNodes).filter(function(){
-            return !$(this).data('_mutation_added');
-          }).data('_mutation_added', true)
-            .find('[data-dispatch*="added"]')
-            .addBack('[data-dispatch*="added"]')
-            .trigger('added');
+            return !$(this).data('_mutation_appended');
+          }).data('_mutation_appended', true)
+            .find('[data-dispatch*="append"], [data-dispatch*="reveal"]:visible')
+            .addBack('[data-dispatch*="append"], [data-dispatch*="reveal"]:visible')
+            .trigger('append')
+            .trigger('reveal');
 
           // Flag nodes that have been removed to avoid unnecessary dispatching
           // Dispatch the removed event on any child elements configured to do so,
           // including the element itself if applicable
           // Event must be dispatched manually since at this point the element no
           // longer exists in the DOM, and can't be trigger()'ed
-          $(mutation.removedNodes)
-          .filter(function(){
+          $(mutation.removedNodes).filter(function(){
             return !$(this).data('_mutation_removed');
           }).data('_mutation_removed', true)
-            .find('[data-dispatch*="removed"]')
-            .addBack('[data-dispatch*="removed"]')
+            .find('[data-dispatch*="remove"], [data-dispatch*="conceal"]')
+            .addBack('[data-dispatch*="remove"], [data-dispatch*="conceal"]')
             .each(function(){
-              Voltron.getModule('Dispatch').trigger.call(this, new $.Event(null, { type: 'removed', target: this }));
+              Voltron.getModule('Dispatch').trigger.call(this, $.Event('remove', { target: this }));
+              Voltron.getModule('Dispatch').trigger.call(this, $.Event('conceal', { target: this }));
             });
         }else if(mutation.type == 'attributes'){
           var target = $(mutation.target);
@@ -94,9 +95,9 @@ Voltron.addModule('Observer', '*', function(){
           if(target.is(':animated')) break;
 
           if(target.is(':hidden')){
-            target.trigger('hide');
+            target.find('[data-dispatch*="conceal"]').addBack().trigger('conceal');
           }else if(target.is(':visible')){
-            target.trigger('show');
+            target.find('[data-dispatch*="reveal"]').addBack().trigger('reveal');
           }
         }
       }

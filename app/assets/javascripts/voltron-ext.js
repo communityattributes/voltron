@@ -1,7 +1,12 @@
 // String
 
-String.prototype.trim = function(){
-  return $.trim(this);
+String.prototype.trim = function(what){
+  var out = $.trim(this);
+  if(what){
+    var re = new RegExp('^' + what.toString() + '|' + what.toString() + '$');
+    out = out.replace(re, '');
+  }
+  return $.trim(out);
 };
 
 String.prototype.blank = function(){
@@ -84,6 +89,24 @@ Array.prototype.first = function(){
 
 Array.prototype.last = function(){
   return this[this.length-1];
+};
+
+Array.prototype.any = function(callback){
+  for(var i=0; i<this.length; i++){
+    if(callback(this[i])){
+      return true;
+    }
+  }
+  return false;
+};
+
+Array.prototype.all = function(callback){
+  for(var i=0; i<this.length; i++){
+    if(!callback(this[i])){
+      return false;
+    }
+  }
+  return true;
 };
 
 // Boolean

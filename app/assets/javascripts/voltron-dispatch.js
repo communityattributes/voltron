@@ -78,26 +78,32 @@ Voltron.addModule('Dispatch', function(){
         }
 
         if(events[event.type]){
-          var context = events[event.type]['context'];
+          var alias = events[event.type]['alias'];
           var moduleName = events[event.type]['module'];
 
           if(Voltron.hasModule(moduleName)){
             var module = Voltron.getModule(moduleName);
-            var method = Voltron('Dispatch/getDispatchMethod', event.type, context);
+            var aliasMethod = Voltron('Dispatch/getDispatchMethod', event.type, alias);
+            var tagMethod = Voltron('Dispatch/getDispatchMethod', event.type, this.tagName);
+            var methods = [aliasMethod, tagMethod].uniq();
 
-            if($.isFunction(module[method])){
-              Voltron.debug('info', 'Dispatching callback function %o', module.name() + '/' + method);
-              module[method](params);
-              return; // Exit so we are not unnecessarily dispatching events
-            }else{
-              Voltron.debug('warn', 'Module %o was defined but callback function %o does not exist. Continuing with standard dispatcher.', module.name(), method);
+            if(!methods.any(function(method){ return $.isFunction(module[method]); })){
+              if(methods.length == 1){
+                Voltron.debug('warn', 'Callback function %o was not found in the %o module. Try defining either/both, or remove %o from your element\'s data-dispatch attribute if the event does not need to be observed', methods[0], module.name(), event.type);
+              }else if(methods.length == 2){
+                Voltron.debug('warn', 'Callback functions %o and %o were not found in the %o module. Try defining either/both, or remove %o from your element\'s data-dispatch attribute if the event does not need to be observed', aliasMethod, tagMethod, module.name(), event.type);
+              }
+              return;
             }
-          }
 
-          Voltron.dispatch([event.type, context].join(':').toLowerCase(), params);
-
-          if(context != this.tagName.toLowerCase()){
-            Voltron.dispatch([event.type, this.tagName].join(':').toLowerCase(), params);
+            $.each(methods, function(index, method){
+              if($.isFunction(module[method])){
+                Voltron.debug('info', 'Dispatching callback function %o in the %o module with observer object: %o', method, module.name(), params);
+                module[method](params);
+              }else{
+                Voltron.debug('log', 'Attempted to dispatch %o in %o module with observer object: %o', method, module.name(), params);
+              }
+            });
           }
         }
       }
@@ -105,30 +111,24 @@ Voltron.addModule('Dispatch', function(){
 
     getDispatchOptions: function(dispatch, params, element){
       var defaultModule = params.data.module || Voltron.getConfig('controller');
+      var defaultAlias = element.id || element.tagName;
       var options = [];
 
       if((matches = dispatch.match(/^([a-z_\-]+):([a-z\_\-:]+)\/([a-z\_\-]+)/i)) !== null){
-        // Match format: "module:action/context"
-        options[matches[2]] = { context: matches[3], module: matches[1] };
+        // Match format: "module:action/alias"
+        options[matches[2]] = { alias: matches[3], module: matches[1] };
       }else if((matches = dispatch.match(/^([a-z\_\-:]+)\/([a-z\_\-]+)/i)) !== null){
-        // Match format: "action/context", using default module
-        options[matches[1]] = { context: matches[2], module: defaultModule };
-      }else if((matches = dispatch.match(/^([a-z\_\-:]+)$/i)) !== null){
-        // Backward compatibility - Use data-event, element id, or tag name as context,
-        // depending on what is available. Use default module
-        if(params.data.event){
-          options[matches[1]] = { context: params.data.event.toLowerCase(), module: defaultModule };
-        }else if(element.id){
-          options[matches[1]] = { context: element.id.toLowerCase(), module: defaultModule };
-        }else{
-          options[matches[1]] = { context: element.tagName.toLowerCase(), module: defaultModule };
-        }
+        // Match format: "action/alias", using default module
+        options[matches[1]] = { alias: matches[2], module: defaultModule };
+      }else if((matches = dispatch.match(/^([a-z_\-]+):([a-z\_\-:]+)/i)) !== null){
+        // Math format: "module:action", using default alias
+        options[matches[2]] = { alias: defaultAlias, module: matches[1] };
       }
       return options;
     },
 
-    getDispatchMethod: function(event, target){
-      var method = ['on', event, target].join('_');
+    getDispatchMethod: function(event, alias){
+      var method = ['on', event, alias].compact().join('_').replace(/[^a-z0-9\_\-:]+/ig, '').toLowerCase();
       return method.replace(/_([a-z0-9])|\-([a-z0-9])|:([a-z0-9])/ig, function(match){
         return match[1].toUpperCase();
       });

@@ -9,19 +9,20 @@ module Voltron
 
     define_callbacks :generate_voltron_config
 
-    attr_accessor :logger, :debug
+    attr_accessor :logger, :debug, :log_level
 
     attr_writer :base_url
 
     def initialize
       @logger = ::Logger.new(::Rails.root.join('log', 'voltron.log'))
       @debug ||= false
+      @log_level ||= Rails.application.config.log_level
       @base_url ||= (Rails.application.config.action_controller.default_url_options.try(:[], :host) || 'http://localhost:3000')
     end
 
     def to_h
       run_callbacks :generate_voltron_config
-      js.to_h.merge(debug: @debug)
+      js.to_h.merge(debug: @debug, log_level: @log_level)
     end
 
     def merge(data)

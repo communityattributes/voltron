@@ -12,10 +12,10 @@ describe ActionView::Base, type: :helper do
 
   it "can create json config" do
     Voltron.config.debug = true
-    expect(voltron_config_json).to eq("{\"debug\":true,\"controller\":\"test\",\"action\":null,\"auth_token\":\"123\"}")
+    expect(voltron_config_json).to eq("{\"debug\":true,\"log_level\":\"debug\",\"controller\":\"test\",\"action\":null,\"auth_token\":\"123\"}")
 
     Voltron.config.js.custom_var = "test"
-    expect(voltron_config_json).to eq("{\"custom_var\":\"test\",\"debug\":true,\"controller\":\"test\",\"action\":null,\"auth_token\":\"123\"}")
+    expect(voltron_config_json).to eq("{\"custom_var\":\"test\",\"debug\":true,\"log_level\":\"debug\",\"controller\":\"test\",\"action\":null,\"auth_token\":\"123\"}")
   end
 
 end

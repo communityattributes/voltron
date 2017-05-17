@@ -20,6 +20,14 @@ Voltron.setup do |config|
   # What logger calls to Voltron.log should use
   # config.logger = Logger.new(Rails.root.join('log', 'voltron.log'))
 
+  # Set the log level for JS output in the browser console.
+  # Available log levels are: :debug, :info, :warn, :error, :fatal, and :unknown,
+  # or each log levels corresponding number, ranging from 0 through 5 respectively.
+  # For consistency the available log levels match possible options for rails' +log_level+,
+  # but due to limited output options available in the browser console,
+  # "error", "fatal", and "unknown" all behave the same way.
+  # config.log_level = Rails.application.config.log_level
+
 end
 CONTENT
       end

@@ -21,16 +21,16 @@ $.extend(Voltron, {
   _observer: {},
   _modules: {},
   _classes: {},
+  _logLevels: ['debug', 'info', 'warn', 'error', 'fatal', 'unknown'],
+  _logMapping: {
+    log: 0,
+    info: 1,
+    warn: 2,
+    error: 3
+  },
 
   _inherited: {
     _name: null,
-
-    on: function(){
-      var args = Array.prototype.slice.call(arguments, 0);
-      args.push(this);
-      Voltron.on.apply(Voltron, args);
-      return this;
-    },
 
     name: function(){
       return this._name;
@@ -59,15 +59,28 @@ $.extend(Voltron, {
   debug: function(){
     // IE/Edge only expose console when dev tools is open. Check for it's existence before attempting to call log/warn/error/info
     if(this.isDebugging() && console){
+      var logLevelDefined = arguments.length > 2 && typeof arguments[1] == 'number';
       var method = arguments[0];
-      var args = Array.prototype.slice.call(arguments, 1);
-      console[method].apply(console, args);
+      var level = (logLevelDefined ? arguments[1] : this._logMapping[method]);
+      var args = Array.prototype.slice.call(arguments, (logLevelDefined ? 2 : 1));
+      if(level >= this.getLogLevel()){
+        console[method].apply(console, args);
+      }
     }
     return this;
   },
 
+  getLogLevel: function(){
+    var level = this.getConfig('log_level', 0);
+    if(typeof level == 'number'){
+      return (level >= 0 && level <= 5 ? level : 5); // If in range, return the number, otherwise: 'unknown'
+    }
+    var index = this._logLevels.indexOf(level);
+    return (index >= 0 && index <= 5 ? index : 5); // Return the index of the defined level, otherwise: 'unknown'
+  },
+
   getBaseUrl: function(){
-    if(!location.origin) location.origin = location.protocol + "//" + location.host;
+    if(!location.origin) location.origin = location.protocol + '//' + location.host;
     return location.origin;
   },
 
@@ -133,33 +146,25 @@ $.extend(Voltron, {
     return $.map([controllers].flatten().compact(), function(c){ return c.toLowerCase(); }).includes(this.getConfig('controller'));
   },
 
-  // Adds one or more event listener callbacks that will be dispatched when the event occurs
-  // Optionally with a defined context for what `this` will be in the callback function
-  // If not defined it defaults to the core Voltron module, aka - the stuff in this file
-  // Example: Voltron.on('event1', 'event2', 'event3', function(observer){}, this);
-  // OR: Voltron.on('event1 event2 event3', function(observer){}, this);
-  on: function(){
-    var args = Array.prototype.slice.call(arguments, 0);
-    var events = $.map(args, function(item){ if(typeof item == 'string') return item; });
-    var callback = args[events.length];
-    var context = args[events.length+1] || Voltron;
-
-    $.each(events, function(index, event){
-      if(!Voltron._observer[event]) Voltron._observer[event] = [];
-      Voltron._observer[event].push($.proxy(callback, context));
-    });
-    return this;
-  },
-
   // Dispatch an event, optionally providing some additional params to pass to the event listener callback
-  dispatch: function(name, params){
-    if(!params) params = {};
-    this.debug('info', 'Dispatching %o', name);
-    $.each(this._observer[name], function(index, callback){
-      if($.isFunction(callback)){
-        callback(params);
+  dispatch: function(event, alias){
+    var args = Array.prototype.slice.call(arguments, 0);
+    var params = $.isPlainObject(args.last()) ? args.pop() : {};
+    var modules = args.length > 2 ? args.slice(2) : Object.keys(this._modules);
+    var method = Voltron('Dispatch/getDispatchMethod', event, alias);
+    params = $.extend(true, { element: null, event: $.Event(event), data: {} }, params);
+
+    $.each(modules, $.proxy(function(index, module){
+      var mod = this.getModule(module);
+      if(mod){
+        if($.isFunction(mod[method])){
+          Voltron.debug('info', 'Dispatching %o to %o module with observer object: %o', method, mod.name(), params);
+          mod[method].call(mod, params);
+        }else{
+          Voltron.debug('log', 'Attempted to dispatch %o in %o module with observer object: %o', method, mod.name(), params);
+        }
       }
-    });
+    }, this));
     return this;
   },
 
