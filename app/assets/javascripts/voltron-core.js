@@ -191,13 +191,15 @@ $.extend(Voltron, {
 
     // Wait until DOM loaded, then create instances of any modules that should be created
     this.ready(function(id, depends, run){
+      var sortedModules = Object.keys(Voltron._modules);
+      sortedModules.sort();
       if(run === true || ((this.isController(run) || this.isController(id)) && run !== false)){
         if(depends == '*'){
-          $.each(Voltron._modules, function(name, module){
-            if(name.toLowerCase() != id.toLowerCase()){
-              Voltron.getModule(name);
+          for(var i=0; i<sortedModules.length; i++){
+            if(sortedModules[i].toLowerCase() != id.toLowerCase()){
+              Voltron.getModule(sortedModules[i]);
             }
-          });
+          }
         }else{
           for(var i=0; i<depends.length; i++){
             this.getModule(depends[i]);
@@ -229,9 +231,9 @@ $.extend(Voltron, {
         this.debug('info', 'Instantiated %o', name);
         // If there is an initialize function, call it, dispatching before/after events
         if($.isFunction(this._classes[id].initialize)){
-          Voltron.dispatch('before:module:initialize:' + id, { module: this._classes[id] });
+          Voltron.dispatch('before:module:initialize:' + id, { module: this._classes[id] }, ['app']);
           this._classes[id].initialize.apply(this._classes[id], args);
-          Voltron.dispatch('after:module:initialize:' + id, { module: this._classes[id] });
+          Voltron.dispatch('after:module:initialize:' + id, { module: this._classes[id] }, ['app']);
         }
       }
       return this._classes[id];

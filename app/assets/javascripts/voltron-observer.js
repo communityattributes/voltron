@@ -46,6 +46,8 @@ Voltron.addModule('Observer', '*', function(){
       // Trigger append and reveal events on start up for appropriate elements
       $('[data-dispatch*="append"]').trigger('append');
       $('[data-dispatch*="reveal"]:visible').trigger('reveal');
+
+      console.log('Started watching reveal for', $('[data-dispatch*="reveal"]:visible'));
     },
 
     stop: function(){

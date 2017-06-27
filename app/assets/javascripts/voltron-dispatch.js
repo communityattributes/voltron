@@ -4,29 +4,6 @@
 Voltron.addModule('Dispatch', function(){
   var _events = {};
 
-  var Dispatcher = function(context){
-    var callbacks = {};
-
-    return {
-      add: function(event, callback){
-        if(!$.isArray(callbacks[event.toLowerCase()])){
-          callbacks[event.toLowerCase()] = [];
-        }
-        callbacks[event.toLowerCase()].push(callback);
-        return context || this;
-      },
-
-      dispatch: function(event){
-        if($.isArray(callbacks[event.toLowerCase()])){
-          for(var i=0; i<callbacks[event.toLowerCase()].length; i++){
-            callbacks[event.toLowerCase()][i].apply(context || this, Array.prototype.slice.call(arguments, 1));
-          }
-        }
-        return context || this;
-      }
-    };
-  };
-
   return {
     addEventWatcher: function(event){
       var args = Array.prototype.slice.call(arguments, 1).flatten().compact();
@@ -41,7 +18,7 @@ Voltron.addModule('Dispatch', function(){
     },
 
     listen: function(){
-      $('body').off(this.getEvents()).on(this.getEvents(), '[data-dispatch]', this.trigger);
+      $(document.body).off(this.getEvents()).on(this.getEvents(), '[data-dispatch]', this.trigger);
       return this;
     },
 
@@ -104,6 +81,8 @@ Voltron.addModule('Dispatch', function(){
                 Voltron.debug('log', 'Attempted to dispatch %o in %o module with observer object: %o', method, module.name(), params);
               }
             });
+          }else{
+            Voltron.debug('log', 'Tried to dispatch the %o event, but the module %o does not exist. Triggered on element: %o', event.type, moduleName, this);
           }
         }
       }
@@ -121,21 +100,21 @@ Voltron.addModule('Dispatch', function(){
         // Match format: "action/alias", using default module
         options[matches[1]] = { alias: matches[2], module: defaultModule };
       }else if((matches = dispatch.match(/^([a-z_\-]+):([a-z\_\-:]+)/i)) !== null){
-        // Math format: "module:action", using default alias
+        // Match format: "module:action", using default alias
         options[matches[2]] = { alias: defaultAlias, module: matches[1] };
+      }else{
+        // Match everthing else as if no alias or module was defined, use defaults for both
+        options[dispatch.toLowerCase()] = { alias: defaultAlias, module: defaultModule };
       }
       return options;
     },
 
     getDispatchMethod: function(event, alias){
-      var method = ['on', event, alias].compact().join('_').replace(/[^a-z0-9\_\-:]+/ig, '').toLowerCase();
-      return method.replace(/_([a-z0-9])|\-([a-z0-9])|:([a-z0-9])/ig, function(match){
-        return match[1].toUpperCase();
-      });
-    },
-
-    new: function(context){
-      return new Dispatcher(context);
+      return ['on', event, alias].compact().join('_')
+        .replace(/[^a-z0-9\_\-:]+/ig, '')
+        .replace(/([a-z0-9])([A-Z])/g, function(match){ return [match[0], match[1]].join('_') })
+        .toLowerCase()
+        .replace(/_([a-z0-9])|\-([a-z0-9])|:([a-z0-9])/ig, function(match){ return match[1].toUpperCase(); });
     }
   };
 }, true);
