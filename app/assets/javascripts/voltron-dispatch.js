@@ -2,7 +2,8 @@
 //= require voltron-core
 
 Voltron.addModule('Dispatch', function(){
-  var _events = {};
+  var _events = {}
+      _globals = {};
 
   return {
     addEventWatcher: function(event){
@@ -17,8 +18,24 @@ Voltron.addModule('Dispatch', function(){
       return this.listen();
     },
 
+    addGlobalEvent: function(event, selector){
+      var options = this.getDispatchOptions(event, { data: {} }, {});
+      event = Object.keys(options).first();
+      var module = options[event].module;
+      var alias = options[event].alias;
+      if(!$.isArray(_globals[event])) _globals[event] = [];
+      _globals[event].push({ selector: selector, alias: alias, module: module });
+      return this.listen();
+    },
+
     listen: function(){
-      $(document.body).off(this.getEvents()).on(this.getEvents(), '[data-dispatch]', this.trigger);
+      $(document).off(this.getEvents()).on(this.getEvents(), '[data-dispatch]', this.trigger);
+
+      var globals = this.getGlobalEvents();
+      for(var i=0; i<globals.length; i++){
+        $(document).off(globals[i].event).on(globals[i].event, globals[i].selectors.join(', '), this.getGlobalCallback(globals[i].data[i]));
+      }
+
       return this;
     },
 
@@ -26,6 +43,25 @@ Voltron.addModule('Dispatch', function(){
       return $.map(_events, function(val,key){
         return key + '.voltron';
       }).join(' ');
+    },
+
+    getGlobalEvents: function(){
+      return $.map(_globals, function(val,key){
+        var selectors = val.map(function(v){ return v.selector; });
+        var data = val.map(function(v){ return { module: v.module, alias: v.alias }; });
+        return { event: key + '.voltron.global', selectors: selectors, data: data };
+      });
+    },
+
+    getGlobalCallback: function(data){
+      return function(event){
+        // In case the element in question has a data-dispatch attribute already, don't overwrite it
+        // We'll restore the existing data after we trigger the event
+        var oldDispatch = $(this).data('dispatch');
+        $(this).data('dispatch', [[data.module, event.type].compact().join(':'), data.alias].compact().join('/') );
+        Voltron.getModule('Dispatch').trigger.call(this, event);
+        $(this).data('dispatch', oldDispatch);
+      };
     },
 
     getHash: function(keys, vals){

@@ -94,9 +94,9 @@ Voltron.addModule('Observer', '*', function(){
           // If currently animating, break out. We only want to dispatch when the state is truly reached
           if(target.is(':animated')) break;
 
-          if(target.is(':hidden')){
+          if(target.is(':hidden') || !this.isVisible(mutation.target)){
             target.find('[data-dispatch*="conceal"]').addBack().trigger('conceal');
-          }else if(target.is(':visible')){
+          }else if(target.is(':visible') && this.isVisible(mutation.target)){
             target.find('[data-dispatch*="reveal"]').addBack().trigger('reveal');
           }
         }
@@ -125,6 +125,20 @@ Voltron.addModule('Observer', '*', function(){
           return $(mut.target).data('_mutation', mut).get(0);
         }));
       }
+    },
+
+    isVisible: function(element){
+      var i = 0;
+
+      while(element.tagName !== 'BODY'){
+        if($(element).is(':hidden')) return false;
+        // Limit to only traversing up 200 DOM elements before we hit the body tag
+        // If we go that far and still don't reach the body tag, something's up
+        // or the html is beyond crappy.
+        if(i++ >= 200) break;
+        element = $(element).parent().get(0);
+      }
+      return true;
     }
   };
 }, true);
