@@ -33,7 +33,10 @@ Voltron.addModule('Dispatch', function(){
 
       var globals = this.getGlobalEvents();
       for(var i=0; i<globals.length; i++){
-        $(document).off(globals[i].event).on(globals[i].event, globals[i].selectors.join(', '), this.getGlobalCallback(globals[i].data[i]));
+        $(document).off(globals[i].event);
+        for(var j=0; j<globals[i].data.length; j++){
+          $(document).on(globals[i].event, [globals[i].data[j].selector].flatten().join(', '), this.getGlobalCallback(globals[i].data[j]))
+        }
       }
 
       return this;
@@ -47,9 +50,7 @@ Voltron.addModule('Dispatch', function(){
 
     getGlobalEvents: function(){
       return $.map(_globals, function(val,key){
-        var selectors = val.map(function(v){ return v.selector; });
-        var data = val.map(function(v){ return { module: v.module, alias: v.alias }; });
-        return { event: key + '.voltron.global', selectors: selectors, data: data };
+        return { event: key + '.voltron.global', data: val };
       });
     },
 
@@ -62,6 +63,16 @@ Voltron.addModule('Dispatch', function(){
         Voltron.getModule('Dispatch').trigger.call(this, event);
         $(this).data('dispatch', oldDispatch);
       };
+    },
+
+    getSelectors: function(event){
+      var pattern = new RegExp(event);
+      return $.map(_globals, function(val,key){
+        if(pattern.test(key)){
+          var selectors = val.map(function(v){ return v.selector; });
+          return selectors.flatten();
+        }
+      }).flatten().compact();
     },
 
     getHash: function(keys, vals){

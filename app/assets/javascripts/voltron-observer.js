@@ -44,8 +44,10 @@ Voltron.addModule('Observer', '*', function(){
       this.getObserver().observe(document.body, options);
 
       // Trigger append and reveal events on start up for appropriate elements
-      $('[data-dispatch*="append"]').trigger('append');
-      $('[data-dispatch*="reveal"]:visible').trigger('reveal');
+      $(this.getElements('append')).trigger('append');
+      $(this.getElements('reveal')).filter(function(){
+        return Voltron('Observer/isVisible', this);
+      }).trigger('reveal');
     },
 
     stop: function(){
@@ -70,10 +72,11 @@ Voltron.addModule('Observer', '*', function(){
           $(mutation.addedNodes).filter(function(){
             return !$(this).data('_mutation_appended');
           }).data('_mutation_appended', true)
-            .find('[data-dispatch*="append"], [data-dispatch*="reveal"]:visible')
-            .addBack('[data-dispatch*="append"], [data-dispatch*="reveal"]:visible')
-            .trigger('append')
-            .trigger('reveal');
+            .find(this.getElements('append', 'reveal'))
+            .addBack(this.getElements('append', 'reveal'))
+            .trigger('append').filter(function(){
+              return Voltron('Observer/isVisible', this);
+            }).trigger('reveal');
 
           // Flag nodes that have been removed to avoid unnecessary dispatching
           // Dispatch the removed event on any child elements configured to do so,
@@ -83,8 +86,8 @@ Voltron.addModule('Observer', '*', function(){
           $(mutation.removedNodes).filter(function(){
             return !$(this).data('_mutation_removed');
           }).data('_mutation_removed', true)
-            .find('[data-dispatch*="remove"], [data-dispatch*="conceal"]')
-            .addBack('[data-dispatch*="remove"], [data-dispatch*="conceal"]')
+            .find(this.getElements('remove', 'conceal'))
+            .addBack(this.getElements('remove', 'conceal'))
             .each(function(){
               Voltron.getModule('Dispatch').trigger.call(this, $.Event('remove', { target: this }));
               Voltron.getModule('Dispatch').trigger.call(this, $.Event('conceal', { target: this }));
@@ -94,10 +97,12 @@ Voltron.addModule('Observer', '*', function(){
           // If currently animating, break out. We only want to dispatch when the state is truly reached
           if(target.is(':animated')) break;
 
-          if(target.is(':hidden') || !this.isVisible(mutation.target)){
-            target.find('[data-dispatch*="conceal"]').addBack().trigger('conceal');
-          }else if(target.is(':visible') && this.isVisible(mutation.target)){
-            target.find('[data-dispatch*="reveal"]').addBack().trigger('reveal');
+          if(!this.isVisible(mutation.target)){
+            target.find(this.getElements('conceal')).trigger('conceal');
+          }else if(this.isVisible(mutation.target)){
+            target.find(this.getElements('reveal')).filter(function(){
+              return Voltron('Observer/isVisible', this);
+            }).trigger('reveal');
           }
         }
       }
@@ -127,18 +132,25 @@ Voltron.addModule('Observer', '*', function(){
       }
     },
 
+    getElements: function(){
+      return $.map(Array.prototype.slice.call(arguments, 0), function(dispatch){
+        return ['[data-dispatch*="' + dispatch + '"]', Voltron('Dispatch/getSelectors', dispatch)];
+      }).flatten().join(', ');
+    },
+
     isVisible: function(element){
-      var i = 0;
+      var i = 0,
+          visible = $(element).is(':visible');
 
       while(element.tagName !== 'BODY'){
-        if($(element).is(':hidden')) return false;
+        if($(element).is(':hidden') || $(element).width() == 0 || $(element).height() == 0) return false;
         // Limit to only traversing up 200 DOM elements before we hit the body tag
         // If we go that far and still don't reach the body tag, something's up
         // or the html is beyond crappy.
         if(i++ >= 200) break;
         element = $(element).parent().get(0);
       }
-      return true;
+      return true && visible;
     }
   };
 }, true);
