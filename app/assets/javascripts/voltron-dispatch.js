@@ -29,11 +29,11 @@ Voltron.addModule('Dispatch', function(){
     },
 
     listen: function(){
-      $(document).off(this.getEvents()).on(this.getEvents(), '[data-dispatch]', this.trigger);
+      $(document).off('.voltron').off('.voltron_global');
+      $(document).on(this.getEvents(), '[data-dispatch]', this.trigger);
 
       var globals = this.getGlobalEvents();
       for(var i=0; i<globals.length; i++){
-        $(document).off(globals[i].event);
         for(var j=0; j<globals[i].data.length; j++){
           $(document).on(globals[i].event, [globals[i].data[j].selector].flatten().join(', '), this.getGlobalCallback(globals[i].data[j]))
         }
@@ -50,7 +50,7 @@ Voltron.addModule('Dispatch', function(){
 
     getGlobalEvents: function(){
       return $.map(_globals, function(val,key){
-        return { event: key + '.voltron.global', data: val };
+        return { event: key + '.voltron_global', data: val };
       });
     },
 
