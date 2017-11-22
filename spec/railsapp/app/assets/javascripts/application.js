@@ -12,5 +12,6 @@
 //
 //= require jquery
 //= require voltron
+//= require voltron-validation
 //= require voltron-observer
-//= require_tree .
+//= require app

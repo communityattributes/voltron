@@ -34,7 +34,15 @@ $.extend(Voltron, {
 
     name: function(){
       return this._name;
-    }
+    },
+
+    getDependencies: function(){
+      return this._dependencies;
+    },
+
+    canReceiveEvents: function(){
+      return Voltron.canRun(this.name());
+    },
   },
 
   initialize: function(conf){
@@ -42,9 +50,9 @@ $.extend(Voltron, {
     $.extend(this._config, conf);
 
     // Try and create a module with the name of the current controller
-    if(this.hasModule(this.getConfig('controller'))){
-      this.ready(Voltron.getModule, this.getConfig('controller'));
-    }
+    //if(this.hasModule(this.getConfig('controller'))){
+    //  this.ready(Voltron.loadModule, this.getConfig('controller'));
+    //}
   },
 
   // When ready, fire the callback function, passing in any additional args
@@ -107,6 +115,11 @@ $.extend(Voltron, {
     return out;
   },
 
+  canRun: function(name){
+    var module = this._modules[name.toLowerCase()];
+    return module['run'] === true || ((this.isController(module['run']) || this.isController(name)) && module['run'] !== false);
+  },
+
   // Set a config value. Supports xpath syntax to change nested key values
   // i.e. setConfig('a/b/c', true); will change the value of "c" to true
   setConfig: function(key, value){
@@ -153,7 +166,7 @@ $.extend(Voltron, {
     var method = Voltron('Dispatch/getDispatchMethod', event, '');
     params = $.extend(true, { element: null, event: $.Event(event), data: {} }, params);
 
-    $.each(modules.flatten(), $.proxy(function(index, module){
+    $.each([modules].flatten(), $.proxy(function(index, module){
       var mod = this.getModule(module);
       if(mod){
         if($.isFunction(mod[method])){
@@ -164,12 +177,12 @@ $.extend(Voltron, {
         }
       }
     }, this));
-    return this;
+    return null;
   },
 
   // Check if a module with the given name has been added
   hasModule: function(id){
-    return $.isFunction(this._modules[id.toLowerCase()]);
+    return this._modules[id.toLowerCase()] && $.isFunction(this._modules[id.toLowerCase()]['module']);
   },
 
   // Add a module, specifying the name (id), the module itself (should be an object or a function that returns such)
@@ -178,41 +191,46 @@ $.extend(Voltron, {
   addModule: function(){
     var id = arguments[0];
     var depends = $.isFunction(arguments[1]) ? [] : arguments[1];
-    var module = $.isFunction(arguments[1]) ? arguments[1] : arguments[2];
-    var run = $.isFunction(arguments[1]) ? arguments[2] : arguments[3];
+    var module  = $.isFunction(arguments[1]) ? arguments[1] : arguments[2];
+    var run     = $.isFunction(arguments[1]) ? arguments[2] : arguments[3];
 
     if(!this.hasModule(id)){
       id = $.camelCase(id).replace(/\b[a-z]/g, function(letter){
         return letter.toUpperCase();
       });
       this[id] = module;
-      this._modules[id.toLowerCase()] = module;
+      this._modules[id.toLowerCase()] = { module: module, run: run, depends: [depends].flatten() };
     }
 
-    // Wait until DOM loaded, then create instances of any modules that should be created
-    this.ready(function(id, depends, run){
+    this.ready(function(){
       var sortedModules = Object.keys(Voltron._modules);
       sortedModules.sort();
-      if(run === true || ((this.isController(run) || this.isController(id)) && run !== false)){
-        if(depends == '*'){
-          for(var i=0; i<sortedModules.length; i++){
-            if(sortedModules[i].toLowerCase() != id.toLowerCase()){
-              Voltron.getModule(sortedModules[i]);
-            }
-          }
-        }else{
-          for(var i=0; i<depends.length; i++){
-            this.getModule(depends[i]);
-          }
-        }
-        this.getModule(id);
+
+      for(var i=0; i<sortedModules.length; i++){
+        this.loadModule(sortedModules[i]);
       }
-    }, [id, depends, run]);
+    });
     return this;
   },
 
   // Get a module with the given name from the list of modules
   getModule: function(name, args){
+    var id = name.toLowerCase();
+    var module = this._modules[id];
+
+    name = $.camelCase(name).replace(/\b[a-z]/g, function(letter){
+      return letter.toUpperCase();
+    });
+
+    if(this.hasModule(id)){
+      return this.loadModule(name, true, args);
+    }else{
+      this.debug('warn', 'Module with name %o does not exist.', name);
+    }
+    return false;
+  },
+
+  loadModule: function(name, force, args){
     var id = name.toLowerCase();
 
     name = $.camelCase(name).replace(/\b[a-z]/g, function(letter){
@@ -220,27 +238,40 @@ $.extend(Voltron, {
     });
 
     if(!args) args = [];
-    if(this.hasModule(id)){
-      if(!this._classes[id]){
-        this._classes[id] = new this._modules[id]($);
-        // Add some inherited methods... shortcuts, if you will
-        this._classes[id] = $.extend(this._classes[id], this._inherited);
-        // Add the name to the module
-        this._classes[id]._name = name;
-        // Tell the user we've created the module
-        this.debug('info', 'Instantiated %o', name);
+    if(!this._classes[id]){
+      var module = new this._modules[id]['module']($);
+      // Add some inherited methods... shortcuts, if you will
+      module = $.extend(module, this._inherited);
+      // Add the name to the module
+      module._name = name;
+      // Add the dependencies to the module
+      module._dependencies = this._modules[id]['depends'];
+
+      if(force || this.canRun(name)){
+        this._classes[id] = module;
+
+        var dependencies = this._classes[id].getDependencies();
+        for(var i=0; i<dependencies.length; i++){
+          if(dependencies[i] == '*'){
+            var sortedModules = Object.keys(this._modules);
+            sortedModules.sort();
+            for(var j=0; j<sortedModules.length; j++){
+              this.loadModule(sortedModules[j], true);
+            }
+          }else{
+            this.loadModule(dependencies[i], true);
+          }
+        }
+
         // If there is an initialize function, call it, dispatching before/after events
         if($.isFunction(this._classes[id].initialize)){
-          Voltron.dispatch('before:module:initialize:' + id, { module: this._classes[id] }, ['app']);
           this._classes[id].initialize.apply(this._classes[id], args);
-          Voltron.dispatch('after:module:initialize:' + id, { module: this._classes[id] }, ['app']);
         }
+        // Tell the user we've created the module
+        this.debug('info', 'Instantiated %o', name);
       }
-      return this._classes[id];
-    }else{
-      this.debug('warn', 'Module with name %o does not exist.', name);
     }
-    return false;
+    return this._classes[id]
   }
 });
 

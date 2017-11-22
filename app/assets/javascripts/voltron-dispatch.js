@@ -108,27 +108,19 @@ Voltron.addModule('Dispatch', function(){
           if(Voltron.hasModule(moduleName)){
             var module = Voltron.getModule(moduleName);
             var aliasMethod = Voltron('Dispatch/getDispatchMethod', event.type, alias);
-            var tagMethod = Voltron('Dispatch/getDispatchMethod', event.type, this.tagName);
-            var methods = [aliasMethod, tagMethod].uniq();
 
-            if(!methods.any(function(method){ return $.isFunction(module[method]); })){
-              if(methods.length == 1){
-                Voltron.debug('warn', 'Callback function %o was not found in the %o module. Try defining either/both, or remove %o from your element\'s data-dispatch attribute if the event does not need to be observed', methods[0], module.name(), event.type);
-              }else if(methods.length == 2){
-                Voltron.debug('warn', 'Callback functions %o and %o were not found in the %o module. Try defining either/both, or remove %o from your element\'s data-dispatch attribute if the event does not need to be observed', aliasMethod, tagMethod, module.name(), event.type);
-              }
-              return;
-            }
-
-            $.each(methods, function(index, method){
-              if($.isFunction(module[method])){
-                Voltron.debug('info', 'Dispatching callback function %o in the %o module with observer object: %o', method, module.name(), params);
-                module[method](params);
+            if(module.canReceiveEvents()){
+              if($.isFunction(module[aliasMethod])){
+                module[aliasMethod](params);
+                Voltron.debug('info', 'Dispatching callback function %o in the %o module with observer object: %o', aliasMethod, module.name(), params);
+              }else if(!$.isFunction(module[aliasMethod])){
+                Voltron.debug('warn', 'Callback function %o was not found in the %o module. Try defining it, or remove %o from your element\'s data-dispatch attribute if the event does not need to be observed', aliasMethod, module.name(), event.type);
+                return;
               }else{
-                Voltron.debug('log', 'Attempted to dispatch %o in %o module with observer object: %o', method, module.name(), params);
+                Voltron.debug('log', 'Attempted to dispatch %o in %o module with observer object: %o', aliasMethod, module.name(), params);
               }
-            });
-          }else{
+            }
+          }else if(Voltron._modules[moduleName.toLowerCase()]){
             Voltron.debug('log', 'Tried to dispatch the %o event, but the module %o does not exist. Triggered on element: %o', event.type, moduleName, this);
           }
         }
