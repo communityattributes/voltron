@@ -14,7 +14,7 @@ module Voltron
     attr_writer :base_url
 
     def initialize
-      @logger = ::Logger.new(::Rails.root.join('log', 'voltron.log'))
+      @logger ||= ::Logger.new(::Rails.root.join('log', 'voltron.log'))
       @debug ||= false
       @log_level ||= Rails.application.config.log_level
       @base_url ||= (Rails.application.config.action_controller.default_url_options.try(:[], :host) || 'http://localhost:3000')
